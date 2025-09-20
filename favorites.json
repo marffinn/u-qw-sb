@@ -1,0 +1,270 @@
+[
+  {
+    "original_ip": "85.28.131.207",
+    "display_hostname": "-= Impactoria =-   <Mlp 1>",
+    "port": 27500,
+    "ping": "44.66",
+    "map": "dm4",
+    "players_count": 0,
+    "spectators_count": 0,
+    "players": [],
+    "mode": "ffa"
+  },
+  {
+    "original_ip": "85.28.131.207",
+    "display_hostname": "-= Impactoria =-   <Mlp 2>",
+    "port": 27501,
+    "ping": "29.69",
+    "map": "dm2",
+    "players_count": 0,
+    "spectators_count": 0,
+    "players": [],
+    "mode": "N/A"
+  },
+  {
+    "original_ip": "85.89.175.250",
+    "display_hostname": "-= Impactoria =- <Silesia 1>",
+    "port": 27500,
+    "ping": "34.03",
+    "map": "dm2",
+    "players_count": 0,
+    "spectators_count": 0,
+    "players": [],
+    "mode": "N/A"
+  },
+  {
+    "original_ip": "85.89.175.250",
+    "display_hostname": "-= Impactoria =- <Silesia 2>",
+    "port": 27501,
+    "ping": "36.00",
+    "map": "dm2",
+    "players_count": 0,
+    "spectators_count": 0,
+    "players": [],
+    "mode": "N/A"
+  },
+  {
+    "original_ip": "85.28.131.207",
+    "display_hostname": "-= Impactoria =- * FFA * <Mlp>",
+    "port": 27505,
+    "ping": "28.92",
+    "map": "mvdsv-kg",
+    "players_count": 0,
+    "spectators_count": 0,
+    "players": [],
+    "mode": "ffa"
+  },
+  {
+    "original_ip": "85.89.175.250",
+    "display_hostname": "-= Impactoria FFA =- <Silesia>",
+    "port": 27505,
+    "ping": "36.62",
+    "map": "mvdsv-kg",
+    "players_count": 0,
+    "spectators_count": 0,
+    "players": [],
+    "mode": "ffa"
+  },
+  {
+    "original_ip": "145.239.94.156",
+    "display_hostname": "zasadzka:27502",
+    "port": 27502,
+    "ping": "20.84",
+    "map": "hoppa2",
+    "players_count": 1,
+    "spectators_count": 0,
+    "players": [
+      {
+        "id": 2,
+        "frags": 0,
+        "time": 6,
+        "ping": 50,
+        "name": "epicmisclick",
+        "skin": "4",
+        "topcolor": 2,
+        "bottomcolor": 5,
+        "team": "coop"
+      }
+    ],
+    "mode": "1on1"
+  },
+  {
+    "original_ip": "145.239.94.156",
+    "display_hostname": "zasadzka:27504",
+    "port": 27504,
+    "ping": "21.98",
+    "map": "aerowalk",
+    "players_count": 0,
+    "spectators_count": 0,
+    "players": [],
+    "mode": "1on1"
+  },
+  {
+    "original_ip": "145.239.94.156",
+    "display_hostname": "zasadzka:27500",
+    "port": 27500,
+    "ping": "20.69",
+    "map": "aerowalk",
+    "players_count": 0,
+    "spectators_count": 0,
+    "players": [],
+    "mode": "1on1"
+  },
+  {
+    "original_ip": "145.239.94.156",
+    "display_hostname": "zasadzka:27501",
+    "port": 27501,
+    "ping": "19.78",
+    "map": "aerowalk",
+    "players_count": 0,
+    "spectators_count": 0,
+    "players": [],
+    "mode": "1on1"
+  },
+  {
+    "original_ip": "145.239.94.156",
+    "display_hostname": "zasadzka:27503",
+    "port": 27503,
+    "ping": "21.50",
+    "map": "aerowalk",
+    "players_count": 0,
+    "spectators_count": 0,
+    "players": [],
+    "mode": "1on1"
+  },
+  {
+    "original_ip": "137.74.7.185",
+    "display_hostname": "play.quake1.pl - duel #1",
+    "port": 27500,
+    "ping": "18.65",
+    "map": "maphub_v1",
+    "players_count": 0,
+    "spectators_count": 0,
+    "players": [],
+    "mode": "1on1"
+  },
+  {
+    "original_ip": "213.80.111.176",
+    "display_hostname": "ToT KTX Server #3",
+    "port": 27502,
+    "ping": "110.48",
+    "map": "dm3",
+    "players_count": 0,
+    "spectators_count": 0,
+    "players": [],
+    "mode": "tot"
+  },
+  {
+    "original_ip": "46.227.68.148",
+    "display_hostname": "QUAKE.SE KTX:28501",
+    "port": 28501,
+    "ping": "41.97",
+    "map": "dm4",
+    "players_count": 1,
+    "spectators_count": 0,
+    "players": [
+      {
+        "id": 96,
+        "frags": 0,
+        "time": 62,
+        "ping": 50,
+        "name": "bass",
+        "skin": "",
+        "topcolor": 2,
+        "bottomcolor": 2,
+        "team": "pq"
+      }
+    ],
+    "mode": "2on2"
+  },
+  {
+    "original_ip": "185.73.44.100",
+    "display_hostname": "Barrysworld FFA Tribute",
+    "port": 27500,
+    "ping": "129.96",
+    "map": "dm6",
+    "players_count": 3,
+    "spectators_count": 0,
+    "players": [
+      {
+        "id": 9,
+        "frags": 19,
+        "time": 317,
+        "ping": 0,
+        "name": "/ bro",
+        "skin": "base",
+        "topcolor": 3,
+        "bottomcolor": 6,
+        "team": ""
+      },
+      {
+        "id": 10,
+        "frags": 12,
+        "time": 317,
+        "ping": 0,
+        "name": "/ goldenboy",
+        "skin": "base",
+        "topcolor": 6,
+        "bottomcolor": 7,
+        "team": ""
+      },
+      {
+        "id": 11,
+        "frags": 17,
+        "time": 317,
+        "ping": 0,
+        "name": "/ tincan",
+        "skin": "base",
+        "topcolor": 9,
+        "bottomcolor": 12,
+        "team": ""
+      }
+    ],
+    "mode": "ffa"
+  },
+  {
+    "original_ip": "34.32.95.193",
+    "display_hostname": "Berlin KTX Server antilag #3",
+    "port": 27512,
+    "ping": "32.20",
+    "map": "dm3",
+    "players_count": 0,
+    "spectators_count": 0,
+    "players": [],
+    "mode": "ffa"
+  },
+  {
+    "original_ip": "213.239.216.253",
+    "display_hostname": "FFA @ qw.servegame.org",
+    "port": 27500,
+    "ping": "34.62",
+    "map": "baldm6",
+    "players_count": 0,
+    "spectators_count": 1,
+    "players": [
+      {
+        "id": 43,
+        "frags": "S",
+        "time": 30,
+        "ping": 52,
+        "name": "Chihab Lamouri",
+        "skin": "2",
+        "topcolor": 0,
+        "bottomcolor": 8,
+        "team": "zero"
+      }
+    ],
+    "mode": "N/A"
+  },
+  {
+    "original_ip": "147.135.208.107",
+    "display_hostname": "pl.clanrot.org KTX:28501",
+    "port": 28501,
+    "ping": "21.10",
+    "map": "maphub_v1",
+    "players_count": 0,
+    "spectators_count": 0,
+    "players": [],
+    "mode": "2on2"
+  }
+]
