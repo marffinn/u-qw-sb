@@ -179,7 +179,7 @@ def parse_status_response(data):
                     i += 2
                     continue
                 elif value_candidate == 'mode' and 'mode' not in server_info:
-                    server_info['mode'] = key_candidate
+                    server_info['mode'] = value_candidate
                     i += 2
                     continue
                 try:
@@ -266,7 +266,6 @@ class QuakeWorldGUI:
 
         self.root.protocol("WM_DELETE_WINDOW", self._on_closing)
 
-        # Set minimum window size
         self.root.minsize(900, 600)
 
         self.notebook = ttk.Notebook(root)
@@ -289,7 +288,7 @@ class QuakeWorldGUI:
         self.all_servers_tree.heading('Ping', text='Ping (ms)', command=lambda: self.sort_column_by('Ping', self.all_servers_tree))
         self.all_servers_tree.heading('Map', text='Map', command=lambda: self.sort_column_by('Map', self.all_servers_tree))
         self.all_servers_tree.heading('Players', text='Players', command=lambda: self.sort_column_by('Players', self.all_servers_tree))
-        self.all_servers_tree.column('Name', width=200, minwidth=150, stretch=True, anchor='w') # Stretches
+        self.all_servers_tree.column('Name', width=200, minwidth=150, stretch=True, anchor='w')
         self.all_servers_tree.column('Port', width=60, minwidth=50, stretch=False, anchor='center')
         self.all_servers_tree.column('Ping', width=80, minwidth=60, stretch=False, anchor='center')
         self.all_servers_tree.column('Map', width=120, minwidth=80, stretch=False, anchor='center')
@@ -317,7 +316,7 @@ class QuakeWorldGUI:
         self.favorites_tree.heading('Ping', text='Ping (ms)', command=lambda: self.sort_column_by('Ping', self.favorites_tree))
         self.favorites_tree.heading('Map', text='Map', command=lambda: self.sort_column_by('Map', self.favorites_tree))
         self.favorites_tree.heading('Players', text='Players', command=lambda: self.sort_column_by('Players', self.favorites_tree))
-        self.favorites_tree.column('Name', width=200, minwidth=150, stretch=True, anchor='w') # Stretches
+        self.favorites_tree.column('Name', width=200, minwidth=150, stretch=True, anchor='w')
         self.favorites_tree.column('Port', width=60, minwidth=50, stretch=False, anchor='center')
         self.favorites_tree.column('Ping', width=80, minwidth=60, stretch=False, anchor='center')
         self.favorites_tree.column('Map', width=120, minwidth=80, stretch=False, anchor='center')
@@ -349,7 +348,7 @@ class QuakeWorldGUI:
         self.players_tree.heading('Frags', text='Frags', command=lambda: self.sort_column_by('Frags', self.players_tree))
         self.players_tree.heading('Ping', text='Ping', command=lambda: self.sort_column_by('Ping', self.players_tree))
         self.players_tree.heading('Team', text='Team', command=lambda: self.sort_column_by('Team', self.players_tree))
-        self.players_tree.column('Player Name', width=150, minwidth=120, stretch=True, anchor='w') # Stretches
+        self.players_tree.column('Player Name', width=150, minwidth=120, stretch=True, anchor='w')
         self.players_tree.column('Server', width=150, minwidth=120, stretch=False, anchor='w')
         self.players_tree.column('Map', width=100, minwidth=80, stretch=False, anchor='center')
         self.players_tree.column('Frags', width=60, minwidth=50, stretch=False, anchor='center')
@@ -363,12 +362,12 @@ class QuakeWorldGUI:
         self.players_frame.grid_rowconfigure(1, weight=1)
         self.players_frame.grid_columnconfigure(0, weight=1)
 
-        # Settings Tab
+        # Settings Tab (NEW)
         self.settings_frame = ttk.Frame(self.notebook, style='TFrame')
         self.notebook.add(self.settings_frame, text='Settings')
         settings_content_frame = ttk.Frame(self.settings_frame, style='TFrame')
         settings_content_frame.pack(padx=10, pady=10, anchor='nw')
-        settings_content_frame.columnconfigure(1, weight=1) # Allow URL entry to expand
+        settings_content_frame.columnconfigure(1, weight=1)
 
         ttk.Label(settings_content_frame, text="eu-sv.txt URL:", style='TLabel').grid(row=0, column=0, sticky='w', pady=2, padx=2)
         self.eu_sv_url_var = tk.StringVar(value="")
@@ -376,34 +375,35 @@ class QuakeWorldGUI:
         self.eu_sv_url_entry.grid(row=0, column=1, sticky='ew', pady=2, padx=2)
         self.eu_sv_url_entry.bind("<FocusOut>", lambda e: self._save_settings())
         
-        # Moved Max Ping (ms) filter to Settings tab
         ttk.Label(settings_content_frame, text="Max Ping (ms):", style='TLabel').grid(row=1, column=0, sticky='w', pady=2, padx=2)
         self.ping_threshold_var = tk.StringVar()
         self.ping_threshold_entry = ttk.Entry(settings_content_frame, textvariable=self.ping_threshold_var, width=10, style='TEntry')
-        self.ping_threshold_entry.grid(row=1, column=1, sticky='w', pady=2, padx=2) # Keep it to the left within this cell
+        self.ping_threshold_entry.grid(row=1, column=1, sticky='w', pady=2, padx=2)
         self.ping_threshold_entry.bind("<KeyRelease>", self._on_ping_threshold_change)
         self.ping_threshold_entry.bind("<FocusOut>", lambda e: self._save_settings())
 
         self.refresh_eu_sv_button = ttk.Button(settings_content_frame, text="Refresh Server List (eu-sv.txt)", command=self._refresh_server_list_action, style='TButton')
-        self.refresh_eu_sv_button.grid(row=2, column=0, columnspan=2, pady=(10,0), sticky='w') # Place it below, sticky 'w'
-
-        # This frame now occupies all of row 1, aligning all its contents (buttons) to the left
-        self.button_row_frame = ttk.Frame(root, style='TFrame')
-        self.button_row_frame.grid(row=1, column=0, columnspan=2, sticky='w', pady=10, padx=5) # Align entire frame to west
+        self.refresh_eu_sv_button.grid(row=2, column=0, columnspan=2, pady=(10,0), sticky='w')
 
 
-        self.ping_all_button = ttk.Button(self.button_row_frame, text="Ping All Servers", command=self.ping_all, style='TButton')
+        # Main action buttons container. Aligns to grid(row=1, column=0) of root.
+        self.main_buttons_frame = ttk.Frame(root, style='TFrame')
+        self.main_buttons_frame.grid(row=1, column=0, columnspan=2, sticky='w', pady=10, padx=5) # Left-aligns entire button frame.
+                                                                                           # column 0 is chosen here because no other element uses it on root row 1 anymore.
+                                                                                           # columnspan=2 so it effectively spans the width, but sticky='w' makes it cling left.
+
+        self.ping_all_button = ttk.Button(self.main_buttons_frame, text="Ping All Servers", command=self.ping_all, style='TButton')
         self.ping_all_button.pack(side='left', padx=5)
         
-        self.copy_address_button = ttk.Button(self.button_row_frame, text="Copy Address", command=self._copy_selected_address_to_clipboard, style='TButton')
+        self.copy_address_button = ttk.Button(self.main_buttons_frame, text="Copy Address", command=self._copy_selected_address_to_clipboard, style='TButton')
         self.copy_address_button.pack(side='left', padx=5)
         
-        ttk.Button(self.button_row_frame, text="Add to Favorites", command=self._add_to_favorites_action, style='TButton').pack(side='left', padx=5)
+        ttk.Button(self.main_buttons_frame, text="Add to Favorites", command=self._add_to_favorites_action, style='TButton').pack(side='left', padx=5)
         
-        self.remove_from_favorites_button = ttk.Button(self.button_row_frame, text="Remove from Favorites", command=self._remove_from_favorites_action, style='TButton')
+        self.remove_from_favorites_button = ttk.Button(self.main_buttons_frame, text="Remove from Favorites", command=self._remove_from_favorites_action, style='TButton')
         self.remove_from_favorites_button.pack(side='left', padx=5)
 
-        self.save_all_servers_button = ttk.Button(self.button_row_frame, text="Save All Servers", command=self._save_servers_to_cache, style='TButton')
+        self.save_all_servers_button = ttk.Button(self.main_buttons_frame, text="Save All Servers", command=self._save_servers_to_cache, style='TButton')
         self.save_all_servers_button.pack(side='left', padx=5)
         
         self.root.after(0, self._on_tab_select, None)
@@ -432,8 +432,15 @@ class QuakeWorldGUI:
         s.configure('.', background=DARK_BG, foreground=DARK_FG, bordercolor=DARK_BG)
         s.configure('TFrame', background=DARK_BG, foreground=DARK_FG, bordercolor=DARK_BG)
         s.configure('TLabel', background=DARK_BG, foreground=DARK_FG)
+        # Apply default button style (will be overridden for active refresh)
         s.configure('TButton', background=BUTTON_BG, foreground=BUTTON_FG, borderwidth=1, focusthickness=3, focuscolor=ACCENT_COLOR)
         s.map('TButton', background=[('active', ACCENT_COLOR)])
+        # New styles for refresh buttons
+        s.configure('RefreshNormal.TButton', background=BUTTON_BG, foreground=BUTTON_FG, borderwidth=1)
+        s.map('RefreshNormal.TButton', background=[('active', ACCENT_COLOR)])
+        s.configure('RefreshActive.TButton', background=REFRESH_ACTIVE_COLOR, foreground=BUTTON_FG, borderwidth=1) # Red background
+        s.map('RefreshActive.TButton', background=[('active', REFRESH_ACTIVE_COLOR)]) # Stay red when active state is clicked
+
         s.configure('TEntry', fieldbackground=BUTTON_BG, foreground=DARK_FG, insertcolor=DARK_FG, bordercolor=ACCENT_COLOR)
         s.configure('Treeview',
                     background=DARK_BG,
@@ -557,13 +564,13 @@ class QuakeWorldGUI:
 
     def _refresh_server_list_action(self):
         print("User initiated server list refresh from eu-sv.txt source.")
-        self.gui_queue.put((self.refresh_eu_sv_button.config, (), {'state': 'disabled', 'background': REFRESH_ACTIVE_COLOR}))
+        self.gui_queue.put((self.refresh_eu_sv_button.config, (), {'state': 'disabled', 'style': 'RefreshActive.TButton'}))
         
         Thread(target=self._fetch_servers_from_source_and_update_main_list_async, name="RefreshEUSVThread").start()
 
     def _fetch_servers_from_source_and_update_main_list_async(self):
         self._fetch_servers_from_source_and_update_main_list_sync()
-        self.gui_queue.put((self.refresh_eu_sv_button.config, (), {'state': 'normal', 'background': BUTTON_BG}))
+        self.gui_queue.put((self.refresh_eu_sv_button.config, (), {'state': 'normal', 'style': 'RefreshNormal.TButton'}))
         self.gui_queue.put((self._populate_initial_treeview_main_and_favorites, (), {}))
         self.gui_queue.put((self._load_favorites, (), {}))
         self.gui_queue.put((self._aggregate_and_populate_player_data, (), {}))
@@ -914,7 +921,7 @@ class QuakeWorldGUI:
             
         all_unique_servers_to_ping = list(set(servers_to_ping_list))
 
-        self.gui_queue.put((self.ping_all_button.config, (), {'state': 'disabled', 'background': REFRESH_ACTIVE_COLOR}))
+        self.gui_queue.put((self.ping_all_button.config, (), {'state': 'disabled', 'style': 'RefreshActive.TButton'}))
         self.gui_queue.put((self.progressbar.stop, (), {}))
         self.gui_queue.put((self.progressbar.config, (), {'maximum': len(all_unique_servers_to_ping)}))
         self.gui_queue.put((self.progressbar.config, (), {'value': 0}))
@@ -935,7 +942,7 @@ class QuakeWorldGUI:
             self.gui_queue.put((self.sort_by_ping_and_players, (), {}))
             self.gui_queue.put((self._aggregate_and_populate_player_data, (), {}))
             self.gui_queue.put((self.progressbar.grid_forget, (), {}))
-            self.gui_queue.put((self.ping_all_button.config, (), {'state': 'normal', 'background': BUTTON_BG}))
+            self.gui_queue.put((self.ping_all_button.config, (), {'state': 'normal', 'style': 'RefreshNormal.TButton'}))
 
 
         with self.gui_lock:
