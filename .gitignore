@@ -7,3 +7,6 @@ __pycache__/
 
 # Ignore IDE files
 .idea/
+
+# Ignore environment files
+.env
