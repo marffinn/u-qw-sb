@@ -25,8 +25,7 @@ jobs:
     - name: Build executable
       run: pyinstaller BROWSANKA.spec
 
-    - name: Build wheel
-      run: python setup.py bdist_wheel
+    
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
