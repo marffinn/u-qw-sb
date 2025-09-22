@@ -17,8 +17,8 @@ if not exist .env (
 )
 
 REM Load GH_TOKEN from .env file
-for /f "delims=" %%a in ('findstr /B "GH_TOKEN=" .env') do (
-    set "%%a"
+for /f "tokens=1,* delims==" %%a in ('findstr /B "GH_TOKEN=" .env') do (
+    if "%%a"=="GH_TOKEN" set "GH_TOKEN=%%b"
 )
 
 REM Check if GH_TOKEN was loaded
