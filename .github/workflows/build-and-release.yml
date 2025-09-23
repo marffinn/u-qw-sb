@@ -15,23 +15,13 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [windows-latest]
         include:
           - os: windows-latest
             artifact_name: browsanka-windows-executable
             runner: self-hosted # Assuming self-hosted for Windows
             spec_file: BROWSANKA.spec
             executable_name: BROWSANKA.exe
-          - os: ubuntu-latest
-            artifact_name: browsanka-linux-executable
-            runner: ubuntu-latest
-            spec_file: BROWSANKA.spec
-            executable_name: BROWSANKA
-          - os: macos-latest
-            artifact_name: browsanka-macos-executable
-            runner: macos-latest
-            spec_file: BROWSANKA.spec
-            executable_name: BROWSANKA
     runs-on: ${{ matrix.runner }}
 
     steps:
@@ -88,100 +78,8 @@ jobs:
           name: browsanka-windows-installer
           path: BROWSANKA-Setup-${{ github.ref_name }}.exe
 
-  create_linux_installer:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download Linux executable artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: browsanka-linux-executable
-          path: executable_dist
-
-      - name: Copy data files (Linux)
-        run: |
-          cp favorites.json executable_dist/
-          cp eu-sv.txt executable_dist/
-          cp servers_cache.json executable_dist/
-          cp settings.json executable_dist/
-          cp uttanka.ico executable_dist/
-
-      - name: Install AppImage tools (Linux)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libfuse2
-          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
-          chmod +x appimagetool
-
-      - name: Build Linux AppImage
-        run: |
-          mkdir -p AppDir/usr/bin
-          cp executable_dist/BROWSANKA AppDir/usr/bin/
-          cp favorites.json AppDir/
-          cp eu-sv.txt AppDir/
-          cp servers_cache.json AppDir/
-          cp settings.json AppDir/
-          cp uttanka.ico AppDir/
-          echo "[Desktop Entry]" > AppDir/BROWSANKA.desktop
-          echo "Name=BROWSANKA" >> AppDir/BROWSANKA.desktop
-          echo "Exec=BROWSANKA" >> AppDir/BROWSANKA.desktop
-          echo "Icon=uttanka" >> AppDir/BROWSANKA.desktop
-          echo "Type=Application" >> AppDir/BROWSANKA.desktop
-          echo "Categories=Utility;" >> AppDir/BROWSANKA.desktop
-          ./appimagetool AppDir BROWSANKA-linux-${{ github.ref_name }}.AppImage
-
-      - name: Upload Linux installer artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: browsanka-linux-installer
-          path: BROWSANKA-linux-${{ github.ref_name }}.AppImage
-
-  create_macos_installer:
-    needs: build
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download macOS executable artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: browsanka-macos-executable
-          path: executable_dist
-
-      - name: Copy data files (macOS)
-        run: |
-          cp favorites.json executable_dist/
-          cp eu-sv.txt executable_dist/
-          cp servers_cache.json executable_dist/
-          cp settings.json executable_dist/
-          cp uttanka.ico executable_dist/
-
-      - name: Install create-dmg (macOS)
-        run: brew install create-dmg
-
-      - name: Build macOS DMG
-        run: |
-          create-dmg \
-            --volname "BROWSANKA Installer" \
-            --window-pos 200 120 \
-            --window-size 800 500 \
-            --icon-size 100 \
-            --icon "BROWSANKA.app" 200 190 \
-            --hide-extension "BROWSANKA.app" \
-            --app-drop-link 600 185 \
-            "BROWSANKA-macos-${{ github.ref_name }}.dmg" \
-            "executable_dist/"
-
-      - name: Upload macOS installer artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: browsanka-macos-installer
-          path: BROWSANKA-macos-${{ github.ref_name }}.dmg
-
   release:
-    needs: [create_windows_installer, create_linux_installer, create_macos_installer]
+    needs: create_windows_installer
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
 
@@ -198,10 +96,7 @@ jobs:
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            artifacts_download/browsanka-windows-installer/BROWSANKA-Setup-${{ github.ref_name }}.exe
-            artifacts_download/browsanka-linux-installer/BROWSANKA-linux-${{ github.ref_name }}.AppImage
-            artifacts_download/browsanka-macos-installer/BROWSANKA-macos-${{ github.ref_name }}.dmg
+          files: artifacts_download/browsanka-windows-installer/BROWSANKA-Setup-${{ github.ref_name }}.exe
           draft: false
           prerelease: false
         env:
