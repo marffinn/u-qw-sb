@@ -1,4 +1,3 @@
-
 name: Build and Release
 
 on:
@@ -19,20 +18,20 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
         include:
           - os: windows-latest
-            artifact_name: browsanka-windows
+            artifact_name: browsanka-windows-executable
             runner: self-hosted # Assuming self-hosted for Windows
             spec_file: BROWSANKA.spec
-            asset_path_suffix: BROWSANKA.exe
+            executable_name: BROWSANKA.exe
           - os: ubuntu-latest
-            artifact_name: browsanka-linux
+            artifact_name: browsanka-linux-executable
             runner: ubuntu-latest
             spec_file: BROWSANKA.spec
-            asset_path_suffix: BROWSANKA
+            executable_name: BROWSANKA
           - os: macos-latest
-            artifact_name: browsanka-macos
+            artifact_name: browsanka-macos-executable
             runner: macos-latest
             spec_file: BROWSANKA.spec
-            asset_path_suffix: BROWSANKA
+            executable_name: BROWSANKA
     runs-on: ${{ matrix.runner }}
 
     steps:
@@ -49,35 +48,156 @@ jobs:
     - name: Build executable
       run: pyinstaller ${{ matrix.spec_file }}
 
-    - name: List dist directory
-      run: ls -R dist/
-    
-    - name: Upload artifact
+    - name: Upload executable artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.artifact_name }}
         path: dist/
 
-  release:
+  create_installers:
     needs: build
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: self-hosted # Assuming self-hosted for release
+    runs-on: self-hosted # Assuming self-hosted for installer creation
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            executable_artifact_name: browsanka-windows-executable
+            installer_artifact_name: browsanka-windows-installer
+            runner: self-hosted
+            installer_name: BROWSANKA-Setup-${{ github.ref_name }}.exe
+          - os: ubuntu-latest
+            executable_artifact_name: browsanka-linux-executable
+            installer_artifact_name: browsanka-linux-installer
+            runner: ubuntu-latest
+            installer_name: BROWSANKA-linux-${{ github.ref_name }}.AppImage
+          - os: macos-latest
+            executable_artifact_name: browsanka-macos-executable
+            installer_artifact_name: browsanka-macos-installer
+            runner: macos-latest
+            installer_name: BROWSANKA-macos-${{ github.ref_name }}.dmg
+    runs-on: ${{ matrix.runner }}
+
     steps:
-      - name: Download all artifacts
+      - uses: actions/checkout@v4
+
+      - name: Download executable artifact
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          name: ${{ matrix.executable_artifact_name }}
+          path: executable_dist
+
+      - name: Copy data files (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          Copy-Item -Path "favorites.json" -Destination "executable_dist/"
+          Copy-Item -Path "eu-sv.txt" -Destination "executable_dist/"
+          Copy-Item -Path "servers_cache.json" -Destination "executable_dist/"
+          Copy-Item -Path "settings.json" -Destination "executable_dist/"
+          Copy-Item -Path "uttanka.ico" -Destination "executable_dist/"
+
+      - name: Install NSIS (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: crazy-max/ghaction-setup-nsis@v3
+
+      - name: Build Windows Installer
+        if: matrix.os == 'windows-latest'
+        run: |
+          makensis installers/windows/installer.nsi
+          mv "BROWSANKA-Setup-*.exe" "${{ matrix.installer_name }}"
+
+      - name: Copy data files (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cp favorites.json executable_dist/
+          cp eu-sv.txt executable_dist/
+          cp servers_cache.json executable_dist/
+          cp settings.json executable_dist/
+          cp uttanka.ico executable_dist/
+
+      - name: Install AppImage tools (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfuse2
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
+          chmod +x appimagetool
+
+      - name: Build Linux AppImage
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir -p AppDir/usr/bin
+          cp executable_dist/BROWSANKA AppDir/usr/bin/
+          cp favorites.json AppDir/
+          cp eu-sv.txt AppDir/
+          cp servers_cache.json AppDir/
+          cp settings.json AppDir/
+          cp uttanka.ico AppDir/
+          echo "[Desktop Entry]" > AppDir/BROWSANKA.desktop
+          echo "Name=BROWSANKA" >> AppDir/BROWSANKA.desktop
+          echo "Exec=BROWSANKA" >> AppDir/BROWSANKA.desktop
+          echo "Icon=uttanka" >> AppDir/BROWSANKA.desktop
+          echo "Type=Application" >> AppDir/BROWSANKA.desktop
+          echo "Categories=Utility;" >> AppDir/BROWSANKA.desktop
+          ./appimagetool AppDir ${{ matrix.installer_name }}
+
+      - name: Copy data files (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          cp favorites.json executable_dist/
+          cp eu-sv.txt executable_dist/
+          cp servers_cache.json executable_dist/
+          cp settings.json executable_dist/
+          cp uttanka.ico executable_dist/
+
+      - name: Install create-dmg (macOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install create-dmg
+
+      - name: Build macOS DMG
+        if: matrix.os == 'macos-latest'
+        run: |
+          create-dmg \
+            --volname "BROWSANKA Installer" \
+            --window-pos 200 120 \
+            --window-size 800 500 \
+            --icon-size 100 \
+            --icon "BROWSANKA.app" 200 190 \
+            --hide-extension "BROWSANKA.app" \
+            --app-drop-link 600 185 \
+            "${{ matrix.installer_name }}" \
+            "executable_dist/"
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.installer_artifact_name }}
+          path: ${{ matrix.installer_name }}
+
+  release:
+    needs: create_installers
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Download all installer artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts_download
+
+      - name: List downloaded artifacts
+        run: ls -R artifacts_download
 
       - name: Create Release and Upload Assets
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          name: Release ${{ github.ref }}
+          files: |
+            artifacts_download/browsanka-windows-installer/BROWSANKA-Setup-${{ github.ref_name }}.exe
+            artifacts_download/browsanka-linux-installer/BROWSANKA-linux-${{ github.ref_name }}.AppImage
+            artifacts_download/browsanka-macos-installer/BROWSANKA-macos-${{ github.ref_name }}.dmg
           draft: false
           prerelease: false
-          files: |
-            ./artifacts/browsanka-windows/BROWSANKA.exe
-            ./artifacts/browsanka-linux/BROWSANKA
-            ./artifacts/browsanka-macos/BROWSANKA
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+# Force workflow refresh
