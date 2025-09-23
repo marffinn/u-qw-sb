@@ -65,7 +65,23 @@ jobs:
 
       - name: Install NSIS (Windows)
         run: |
-          choco install nsis -y
+          $nsisInstallerUrl = "https://sourceforge.net/projects/nsis/files/NSIS%203/3.09/nsis-3.09-setup.exe/download"
+          $nsisInstallerPath = "nsis-setup.exe"
+
+          # Download the installer
+          Invoke-WebRequest -Uri $nsisInstallerUrl -OutFile $nsisInstallerPath -ErrorAction Stop
+
+          # Verify download (optional, but good practice)
+          $fileInfo = Get-Item $nsisInstallerPath
+          if ($fileInfo.Length -eq 0) {
+              Write-Error "Downloaded NSIS installer is empty."
+              exit 1
+          }
+
+          # Run the installer silently
+          Start-Process -FilePath $nsisInstallerPath -ArgumentList "/S" -Wait -ErrorAction Stop
+
+          # Add NSIS to PATH
           echo "C:\Program Files (x86)\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Build Windows Installer
