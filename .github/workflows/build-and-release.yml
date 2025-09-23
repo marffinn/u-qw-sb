@@ -67,6 +67,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .\artifacts\browsanka-windows\BROWSANKA\BROWSANKA.exe
+          asset_path: .\artifacts\browsanka-windows\BROWSANKA.exe
           asset_name: BROWSANKA-windows.exe
           asset_content_type: application/octet-stream
