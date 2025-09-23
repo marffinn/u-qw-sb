@@ -14,8 +14,18 @@ if not "%VERSION_TAG:~0,1%"=="v" (
 )
 
 set "GITHUB_USERNAME=marffinn"
-set "GITHUB_TOKEN=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"
-set "REPO_URL=https://%GITHUB_USERNAME%:%GITHUB_TOKEN%@github.com/marffinn/u-qw-sb.git"
+
+:: Load environment variables from .env file
+for /f "tokens=1* delims==" %%a in ('type .env ^| findstr /b "GH_TOKEN="') do (
+    set "%%a=%%b"
+)
+
+if not defined GH_TOKEN (
+    echo Error: GH_TOKEN not found in .env file.
+    exit /b 1
+)
+
+set "REPO_URL=https://%GITHUB_USERNAME%:%GH_TOKEN%@github.com/marffinn/u-qw-sb.git"
 
 echo.
 echo --- Building and Releasing %VERSION_TAG% ---
