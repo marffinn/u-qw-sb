@@ -66,6 +66,13 @@ jobs:
       - name: Add NSIS to PATH
         run: echo "C:\Program Files (x86)\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
+      - name: Diagnose installer.nsi access
+        run: |
+          Get-ChildItem "$env:GITHUB_WORKSPACE\installers\windows\"
+          Get-Content "$env:GITHUB_WORKSPACE\installers\windows\installer.nsi" -ErrorAction SilentlyContinue
+          # The above will print the content if readable, or nothing if not.
+          # If it fails with an error, it will be caught by the workflow.
+
       
 
       - name: Build Windows Installer
