@@ -50,6 +50,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: List root directory contents
+        run: Get-ChildItem -Path $env:GITHUB_WORKSPACE
+
       - name: Download Windows executable artifact
         uses: actions/download-artifact@v4
         with:
