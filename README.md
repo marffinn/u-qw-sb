@@ -1,4 +1,5 @@
 # BROWSANKA - QuakeWorld Server Browser
+![Screenshot](screenshot.png)
 
 This is a simple QuakeWorld server browser written in Python with a Tkinter GUI. It allows you to:
 
