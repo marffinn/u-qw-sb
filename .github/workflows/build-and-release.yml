@@ -50,6 +50,9 @@ jobs:
     needs: build
     runs-on: self-hosted
     steps:
+      - name: Clean GITHUB_WORKSPACE
+        run: Remove-Item -Path "$env:GITHUB_WORKSPACE\*" -Recurse -Force -ErrorAction SilentlyContinue
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Full clone to ensure all files are present
