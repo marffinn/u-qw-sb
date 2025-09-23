@@ -14,7 +14,26 @@ permissions:
 
 jobs:
   build:
-    runs-on: self-hosted
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            artifact_name: browsanka-windows
+            runner: self-hosted # Assuming self-hosted for Windows
+            spec_file: BROWSANKA.spec
+            asset_path_suffix: BROWSANKA.exe
+          - os: ubuntu-latest
+            artifact_name: browsanka-linux
+            runner: ubuntu-latest
+            spec_file: BROWSANKA.spec
+            asset_path_suffix: BROWSANKA
+          - os: macos-latest
+            artifact_name: browsanka-macos
+            runner: macos-latest
+            spec_file: BROWSANKA.spec
+            asset_path_suffix: BROWSANKA
+    runs-on: ${{ matrix.runner }}
 
     steps:
     - uses: actions/checkout@v4
@@ -25,10 +44,10 @@ jobs:
         python-version: '3.9'
 
     - name: Install dependencies
-      run: python -m pip install --upgrade pip wheel pyinstaller
+      run: python -m pip install --upgrade pip pipenv wheel pyinstaller
 
     - name: Build executable
-      run: pyinstaller BROWSANKA.spec
+      run: pyinstaller ${{ matrix.spec_file }}
 
     - name: List dist directory
       run: ls -R dist/
@@ -36,13 +55,13 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: browsanka-windows
+        name: ${{ matrix.artifact_name }}
         path: dist/
 
   release:
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
-    runs-on: self-hosted
+    runs-on: self-hosted # Assuming self-hosted for release
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -60,13 +79,32 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset
-        id: upload-release-asset
+      - name: Upload Windows Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .\artifacts\browsanka-windows\BROWSANKA.exe
+          asset_path: ./artifacts/browsanka-windows/BROWSANKA.exe
           asset_name: BROWSANKA-windows.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload Linux Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/browsanka-linux/BROWSANKA
+          asset_name: BROWSANKA-linux
+          asset_content_type: application/octet-stream
+
+      - name: Upload macOS Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/browsanka-macos/BROWSANKA
+          asset_name: BROWSANKA-macos
           asset_content_type: application/octet-stream
