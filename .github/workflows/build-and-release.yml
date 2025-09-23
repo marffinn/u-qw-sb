@@ -50,8 +50,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: List root directory contents
-        run: Get-ChildItem -Path $env:GITHUB_WORKSPACE
+      - name: Diagnose repository contents
+        run: |
+          echo "Listing GITHUB_WORKSPACE contents:"
+          Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse
+          echo "Git status:"
+          git status
+          echo "Git log -1:"
+          git log -1
 
       - name: Download Windows executable artifact
         uses: actions/download-artifact@v4
