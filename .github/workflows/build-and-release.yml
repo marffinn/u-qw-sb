@@ -59,7 +59,6 @@ jobs:
       - name: Copy data files (Windows)
         run: |
           Copy-Item -Path "favorites.json" -Destination "executable_dist/"
-          Copy-Item -Path "eu-sv.txt" -Destination "executable_dist/"
           Copy-Item -Path "servers_cache.json" -Destination "executable_dist/"
           Copy-Item -Path "settings.json" -Destination "executable_dist/"
           Copy-Item -Path "uttanka.ico" -Destination "executable_dist/"
