@@ -67,6 +67,13 @@ if not exist "release" (
     )
 )
 
+:: Clean release directory
+echo Cleaning release directory...
+del /Q "release\*"
+if %errorlevel% neq 0 (
+    echo Warning: Failed to clean release directory. Continuing anyway.
+)
+
 :: 5. Move the installer
 echo Moving installer to release directory...
 move "installers\windows\BROWSANKA-Setup-1.0.0.exe" "release\BROWSANKA-Setup-%APP_VERSION%.exe"
