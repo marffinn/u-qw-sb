@@ -90,7 +90,7 @@ BUTTON_BG = '#3e4451'
 BUTTON_FG = DARK_FG
 SELECTED_BG = '#4b5263'
 ERROR_COLOR = '#e06c75'
-SPECTATOR_BG = '#3e4451'
+SPECTATOR_BG = '#a0522d' # Slightly darker brown for visibility
 REFRESH_ACTIVE_COLOR = '#d9534f'
 
 
@@ -179,7 +179,7 @@ def parse_status_response(data):
                     i += 2
                     continue
                 elif value_candidate == 'mode' and 'mode' not in server_info:
-                    server_info['mode'] = value_candidate
+                    server_info['mode'] = key_candidate
                     i += 2
                     continue
                 try:
@@ -382,17 +382,14 @@ class QuakeWorldGUI:
         self.ping_threshold_entry.bind("<KeyRelease>", self._on_ping_threshold_change)
         self.ping_threshold_entry.bind("<FocusOut>", lambda e: self._save_settings())
 
-        self.refresh_eu_sv_button = ttk.Button(settings_content_frame, text="Refresh Server List (eu-sv.txt)", command=self._refresh_server_list_action, style='TButton')
+        self.refresh_eu_sv_button = ttk.Button(settings_content_frame, text="Refresh Server List (eu-sv.txt)", command=self._refresh_server_list_action, style='RefreshNormal.TButton')
         self.refresh_eu_sv_button.grid(row=2, column=0, columnspan=2, pady=(10,0), sticky='w')
 
 
-        # Main action buttons container. Aligns to grid(row=1, column=0) of root.
         self.main_buttons_frame = ttk.Frame(root, style='TFrame')
-        self.main_buttons_frame.grid(row=1, column=0, columnspan=2, sticky='w', pady=10, padx=5) # Left-aligns entire button frame.
-                                                                                           # column 0 is chosen here because no other element uses it on root row 1 anymore.
-                                                                                           # columnspan=2 so it effectively spans the width, but sticky='w' makes it cling left.
+        self.main_buttons_frame.grid(row=1, column=0, columnspan=2, sticky='w', pady=10, padx=5)
 
-        self.ping_all_button = ttk.Button(self.main_buttons_frame, text="Ping All Servers", command=self.ping_all, style='TButton')
+        self.ping_all_button = ttk.Button(self.main_buttons_frame, text="Ping All Servers", command=self.ping_all, style='RefreshNormal.TButton')
         self.ping_all_button.pack(side='left', padx=5)
         
         self.copy_address_button = ttk.Button(self.main_buttons_frame, text="Copy Address", command=self._copy_selected_address_to_clipboard, style='TButton')
@@ -432,7 +429,6 @@ class QuakeWorldGUI:
         s.configure('.', background=DARK_BG, foreground=DARK_FG, bordercolor=DARK_BG)
         s.configure('TFrame', background=DARK_BG, foreground=DARK_FG, bordercolor=DARK_BG)
         s.configure('TLabel', background=DARK_BG, foreground=DARK_FG)
-        # Apply default button style (will be overridden for active refresh)
         s.configure('TButton', background=BUTTON_BG, foreground=BUTTON_FG, borderwidth=1, focusthickness=3, focuscolor=ACCENT_COLOR)
         s.map('TButton', background=[('active', ACCENT_COLOR)])
         # New styles for refresh buttons
@@ -1579,4 +1575,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-# sss
