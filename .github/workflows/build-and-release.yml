@@ -26,6 +26,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Full clone to ensure all files are present
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -49,6 +51,8 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full clone to ensure all files are present
 
       - name: Diagnose repository contents
         run: |
