@@ -70,7 +70,7 @@ jobs:
 
       - name: Build Windows Installer
         run: |
-          makensis installers/windows/installer.nsi
+          makensis "$env:GITHUB_WORKSPACE\installers\windows\installer.nsi"
           mv "BROWSANKA-Setup-*.exe" "BROWSANKA-Setup-${{ github.ref_name }}.exe"
 
       - name: Upload Windows installer artifact
