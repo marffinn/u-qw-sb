@@ -1,105 +1,23 @@
-name: Build and Release
+name: Release
 
 on:
   push:
-    branches:
-      - main
     tags:
       - 'v*.*.*'
-  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        os: [windows-latest]
-        include:
-          - os: windows-latest
-            artifact_name: browsanka-windows-executable
-            runner: self-hosted # Assuming self-hosted for Windows
-            spec_file: BROWSANKA.spec
-            executable_name: BROWSANKA.exe
-    runs-on: ${{ matrix.runner }}
-
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0 # Full clone to ensure all files are present
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.9'
-
-    - name: Install dependencies
-      run: python -m pip install --upgrade pip pipenv wheel pyinstaller
-
-    - name: Build executable
-      run: pyinstaller ${{ matrix.spec_file }}
-
-    - name: Upload executable artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ matrix.artifact_name }}
-        path: dist/
-
-  create_windows_installer:
-    needs: build
-    runs-on: self-hosted
+  release:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Full clone to ensure all files are present
 
-      - name: Download Windows executable artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: browsanka-windows-executable
-          path: executable_dist
-
-      - name: Copy data files (Windows)
-        run: |
-          Copy-Item -Path "favorites.json" -Destination "executable_dist/"
-          Copy-Item -Path "servers_cache.json" -Destination "executable_dist/"
-          Copy-Item -Path "settings.json" -Destination "executable_dist/"
-          Copy-Item -Path "uttanka.ico" -Destination "executable_dist/"
-
-      - name: Add NSIS to PATH
-        run: echo "C:\Program Files (x86)\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - name: Build Windows Installer
-        run: |
-          makensis "$env:GITHUB_WORKSPACE\installers\windows\installer.nsi"
-          mv "BROWSANKA-Setup-*.exe" "BROWSANKA-Setup-${{ github.ref_name }}.exe"
-
-      - name: Upload Windows installer artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: browsanka-windows-installer
-          path: BROWSANKA-Setup-${{ github.ref_name }}.exe
-
-  release:
-    needs: create_windows_installer
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-
-    steps:
-      - uses: actions/checkout@v4 # Added checkout here as well
-      - name: Download all installer artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts_download
-
-      - name: List downloaded artifacts
-        run: ls -R artifacts_download
-
-      - name: Create Release and Upload Assets
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: artifacts_download/browsanka-windows-installer/BROWSANKA-Setup-${{ github.ref_name }}.exe
+          files: release/BROWSANKA-Setup.exe
           draft: false
           prerelease: false
         env:
