@@ -1,4 +1,5 @@
 # Ignore virtual environment
+
 .venv/
 
 # Ignore Python cache files
@@ -9,4 +10,17 @@ __pycache__/
 .idea/
 
 # Ignore environment files
+.env
+
+# Ignore Windows batch files
+*.bat
+
+# Ignore PyInstaller spec files
+*.spec
+
+# Ignore PyInstaller build directories
+build/
+dist/
+
+# Ignore environment variable file
 .env
