@@ -56,7 +56,6 @@ jobs:
 
   create_installers:
     needs: build
-    runs-on: self-hosted # Assuming self-hosted for installer creation
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
