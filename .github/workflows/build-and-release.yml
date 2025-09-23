@@ -54,40 +54,19 @@ jobs:
         name: ${{ matrix.artifact_name }}
         path: dist/
 
-  create_installers:
+  create_windows_installer:
     needs: build
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        include:
-          - os: windows-latest
-            executable_artifact_name: browsanka-windows-executable
-            installer_artifact_name: browsanka-windows-installer
-            runner: self-hosted
-            installer_name: BROWSANKA-Setup-${{ github.ref_name }}.exe
-          - os: ubuntu-latest
-            executable_artifact_name: browsanka-linux-executable
-            installer_artifact_name: browsanka-linux-installer
-            runner: ubuntu-latest
-            installer_name: BROWSANKA-linux-${{ github.ref_name }}.AppImage
-          - os: macos-latest
-            executable_artifact_name: browsanka-macos-executable
-            installer_artifact_name: browsanka-macos-installer
-            runner: macos-latest
-            installer_name: BROWSANKA-macos-${{ github.ref_name }}.dmg
-    runs-on: ${{ matrix.runner }}
-
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download executable artifact
+      - name: Download Windows executable artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.executable_artifact_name }}
+          name: browsanka-windows-executable
           path: executable_dist
 
       - name: Copy data files (Windows)
-        if: matrix.os == 'windows-latest'
         run: |
           Copy-Item -Path "favorites.json" -Destination "executable_dist/"
           Copy-Item -Path "eu-sv.txt" -Destination "executable_dist/"
@@ -96,17 +75,32 @@ jobs:
           Copy-Item -Path "uttanka.ico" -Destination "executable_dist/"
 
       - name: Install NSIS (Windows)
-        if: matrix.os == 'windows-latest'
         uses: crazy-max/ghaction-setup-nsis@v3
 
       - name: Build Windows Installer
-        if: matrix.os == 'windows-latest'
         run: |
           makensis installers/windows/installer.nsi
-          mv "BROWSANKA-Setup-*.exe" "${{ matrix.installer_name }}"
+          mv "BROWSANKA-Setup-*.exe" "BROWSANKA-Setup-${{ github.ref_name }}.exe"
+
+      - name: Upload Windows installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: browsanka-windows-installer
+          path: BROWSANKA-Setup-${{ github.ref_name }}.exe
+
+  create_linux_installer:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Linux executable artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: browsanka-linux-executable
+          path: executable_dist
 
       - name: Copy data files (Linux)
-        if: matrix.os == 'ubuntu-latest'
         run: |
           cp favorites.json executable_dist/
           cp eu-sv.txt executable_dist/
@@ -115,7 +109,6 @@ jobs:
           cp uttanka.ico executable_dist/
 
       - name: Install AppImage tools (Linux)
-        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y libfuse2
@@ -123,7 +116,6 @@ jobs:
           chmod +x appimagetool
 
       - name: Build Linux AppImage
-        if: matrix.os == 'ubuntu-latest'
         run: |
           mkdir -p AppDir/usr/bin
           cp executable_dist/BROWSANKA AppDir/usr/bin/
@@ -138,10 +130,27 @@ jobs:
           echo "Icon=uttanka" >> AppDir/BROWSANKA.desktop
           echo "Type=Application" >> AppDir/BROWSANKA.desktop
           echo "Categories=Utility;" >> AppDir/BROWSANKA.desktop
-          ./appimagetool AppDir ${{ matrix.installer_name }}
+          ./appimagetool AppDir BROWSANKA-linux-${{ github.ref_name }}.AppImage
+
+      - name: Upload Linux installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: browsanka-linux-installer
+          path: BROWSANKA-linux-${{ github.ref_name }}.AppImage
+
+  create_macos_installer:
+    needs: build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download macOS executable artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: browsanka-macos-executable
+          path: executable_dist
 
       - name: Copy data files (macOS)
-        if: matrix.os == 'macos-latest'
         run: |
           cp favorites.json executable_dist/
           cp eu-sv.txt executable_dist/
@@ -150,11 +159,9 @@ jobs:
           cp uttanka.ico executable_dist/
 
       - name: Install create-dmg (macOS)
-        if: matrix.os == 'macos-latest'
         run: brew install create-dmg
 
       - name: Build macOS DMG
-        if: matrix.os == 'macos-latest'
         run: |
           create-dmg \
             --volname "BROWSANKA Installer" \
@@ -164,21 +171,22 @@ jobs:
             --icon "BROWSANKA.app" 200 190 \
             --hide-extension "BROWSANKA.app" \
             --app-drop-link 600 185 \
-            "${{ matrix.installer_name }}" \
+            "BROWSANKA-macos-${{ github.ref_name }}.dmg" \
             "executable_dist/"
 
-      - name: Upload installer artifact
+      - name: Upload macOS installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.installer_artifact_name }}
-          path: ${{ matrix.installer_name }}
+          name: browsanka-macos-installer
+          path: BROWSANKA-macos-${{ github.ref_name }}.dmg
 
   release:
-    needs: create_installers
+    needs: [create_windows_installer, create_linux_installer, create_macos_installer]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
+      - uses: actions/checkout@v4 # Added checkout here as well
       - name: Download all installer artifacts
         uses: actions/download-artifact@v4
         with:
