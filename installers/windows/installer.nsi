@@ -4,7 +4,7 @@
 !define APP_URL "https://github.com/marffinn/u-qw-sb"
 !define APP_EXE_NAME "BROWSANKA.exe"
 !define APP_ICON "uttanka.ico"
-!define BUILD_ROOT "executable_dist"
+!define BUILD_ROOT "..\..\executable_dist"
 
 OutFile "${APP_NAME}-Setup-${APP_VERSION}.exe"
 InstallDir "$PROGRAMFILES\${APP_NAME}"
