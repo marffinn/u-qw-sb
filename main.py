@@ -33,53 +33,12 @@ PING_THRESHOLD_MEDIUM = 60.0
 
 
 CHARSET = {
-    0: 46,
-    1: 35,
-    2: 35,
-    3: 35,
-    4: 35,
-    5: 46,
-    6: 35,
-    7: 35,
-    8: 35,
-    9: 35,
-    11: 35,
-    12: 32,
-    13: 62,
-    14: 46,
-    15: 46,
-    16: 91,
-    17: 93,
-    18: 48,
-    19: 49,
-    20: 50,
-    21: 51,
-    22: 52,
-    23: 53,
-    24: 54,
-    25: 55,
-    26: 56,
-    27: 57,
-    28: 46,
-    29: 32,
-    30: 32,
-    31: 32,
-    127: 32,
-    128: 40,
-    129: 61,
-    130: 41,
-    131: 35,
-    132: 35,
-    133: 46,
-    134: 35,
-    135: 35,
-    136: 35,
-    137: 35,
-    139: 35,
-    140: 32,
-    141: 62,
-    142: 46,
-    143: 46,
+    0: 46, 1: 35, 2: 35, 3: 35, 4: 35, 5: 46, 6: 35, 7: 35, 8: 35, 9: 35,
+    11: 35, 12: 32, 13: 62, 14: 46, 15: 46, 16: 91, 17: 93, 18: 48, 19: 49,
+    20: 50, 21: 51, 22: 52, 23: 53, 24: 54, 25: 55, 26: 56, 27: 57, 28: 46,
+    29: 32, 30: 32, 31: 32, 127: 32, 128: 40, 129: 61, 130: 41, 131: 35,
+    132: 35, 133: 46, 134: 35, 135: 35, 136: 35, 137: 35, 139: 35, 140: 32,
+    141: 62, 142: 46, 143: 46,
 }
 
 
@@ -90,7 +49,7 @@ BUTTON_BG = '#3e4451'
 BUTTON_FG = DARK_FG
 SELECTED_BG = '#4b5263'
 ERROR_COLOR = '#e06c75'
-SPECTATOR_BG = '#a0522d' # Slightly darker brown for visibility
+SPECTATOR_BG = '#a0522d'
 REFRESH_ACTIVE_COLOR = '#d9534f'
 
 
@@ -103,46 +62,44 @@ PING_MEDIUM_COLOR = '#f0ad4e'
 PING_HIGH_COLOR = '#d9534f'
 
 
+MATCH_ONGOING_COLOR = '#8B4513'
+MATCH_STANDBY_COLOR = '#FFA500'
+MATCH_NOT_ONGOING_COLOR = '#006400'
+
+BOT_COLOR = '#36454F'
+
+MAX_VISIBLE_PLAYER_ROWS_IN_MODAL = 10
+
+
 def quake_chars(data):
     data = bytearray(data)
     for i in range(len(data)):
-        if 31 < data[i] < 127:
-            continue
-        if 143 < data[i] < 255:
-            data[i] = data[i] - 128
-        if data[i] in CHARSET:
-            data[i] = CHARSET[data[i]]
+        if 31 < data[i] < 127: continue
+        if 143 < data[i] < 255: data[i] = data[i] - 128
+        if data[i] in CHARSET: data[i] = CHARSET[data[i]]
     return data
 
 
 def udp_command(address, port, data):
     client = None
     try:
-        try:
-            ip_address = socket.gethostbyname(address)
-        except socket.gaierror as e:
-            return {"error": f"DNS resolution failed for {address}: {e}"}, None, None
+        try: ip_address = socket.gethostbyname(address)
+        except socket.gaierror as e: return {"error": f"DNS resolution failed for {address}: {e}"}, None, None
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         client.settimeout(UDP_TIMEOUT)
-        try:
-            client.bind(('', 0))
-        except socket.error:
-            pass
+        try: client.bind(('', 0))
+        except socket.error: pass
         buf = b'\xFF\xFF\xFF\xFF' + data.encode('ascii')
         send_time = time.time()
         client.sendto(buf, (ip_address, port))
         msg, server_addr = client.recvfrom(4096)
         ping_time_calc = (time.time() - send_time) * 1000
         return None, msg, ping_time_calc
-    except socket.timeout:
-        return {"error": "timeout"}, None, None
-    except socket.error as e:
-        return {"error": str(e)}, None, None
-    except Exception as e:
-        return {"error": str(e)}, None, None
+    except socket.timeout: return {"error": "timeout"}, None, None
+    except socket.error as e: return {"error": str(e)}, None, None
+    except Exception as e: return {"error": str(e)}, None, None
     finally:
-        if client:
-             client.close()
+        if client: client.close()
 
 
 def parse_status_response(data):
@@ -156,69 +113,37 @@ def parse_status_response(data):
             tmp_parts = [part for part in first_line_raw.split('\\') if part]
             i = 0
             while i < len(tmp_parts) - 1:
-                key_candidate = tmp_parts[i]
-                value_candidate = tmp_parts[i+1]
-                if key_candidate == 'hostname' and 'hostname' not in server_info:
-                    server_info['hostname'] = value_candidate
-                    i += 2
-                    continue
-                elif key_candidate == 'map' and 'map' not in server_info:
-                    server_info['map'] = value_candidate
-                    i += 2
-                    continue
-                elif key_candidate == 'mode' and 'mode' not in server_info:
-                    server_info['mode'] = value_candidate
-                    i += 2
-                    continue
-                elif value_candidate == 'hostname' and 'hostname' not in server_info:
-                    server_info['hostname'] = key_candidate
-                    i += 2
-                    continue
-                elif value_candidate == 'map' and 'map' not in server_info:
-                    server_info['map'] = key_candidate
-                    i += 2
-                    continue
-                elif value_candidate == 'mode' and 'mode' not in server_info:
-                    server_info['mode'] = key_candidate
-                    i += 2
-                    continue
-                try:
-                    server_info[key_candidate] = value_candidate if isNaN(value_candidate) else int(value_candidate)
-                except ValueError: 
-                    pass
+                key_candidate, value_candidate = tmp_parts[i], tmp_parts[i+1]
+                if key_candidate == 'hostname' and 'hostname' not in server_info: server_info['hostname'] = value_candidate; i += 2; continue
+                elif key_candidate == 'map' and 'map' not in server_info: server_info['map'] = value_candidate; i += 2; continue
+                elif key_candidate == 'mode' and 'mode' not in server_info: server_info['mode'] = value_candidate; i += 2; continue
+                elif value_candidate == 'hostname' and 'hostname' not in server_info: server_info['hostname'] = key_candidate; i += 2; continue
+                elif value_candidate == 'map' and 'map' not in server_info: server_info['map'] = key_candidate; i += 2; continue
+                elif value_candidate == 'mode' and 'mode' not in server_info: server_info['mode'] = key_candidate; i += 2; continue
+                try: server_info[key_candidate] = value_candidate if isNaN(value_candidate) else int(value_candidate)
+                except ValueError: pass
                 i += 2
         for p_line in lines:
-            if not p_line.strip():
-                continue
+            if not p_line.strip(): continue
             match = re.match(r'^(-?\d+)\s+(-?[S\d]+)\s+(-?\d+)\s+(-?\d+)\s*\s*"(.*?)"\s*"(.*?)"\s*(\d+)\s*(\d+)(?:\s"(.*?)"|$)', p_line)
             if match:
                 try:
                     player_info = {
-                        'id': int(match.group(1)),
-                        'frags': match.group(2) if match.group(2) == 'S' else int(match.group(2)),
-                        'time': int(match.group(3)),
-                        'ping': int(match.group(4)),
-                        'name': match.group(5),
-                        'skin': match.group(6),
-                        'topcolor': int(match.group(7)),
-                        'bottomcolor': int(match.group(8)),
+                        'id': int(match.group(1)), 'frags': match.group(2) if match.group(2) == 'S' else int(match.group(2)),
+                        'time': int(match.group(3)), 'ping': int(match.group(4)), 'name': match.group(5),
+                        'skin': match.group(6), 'topcolor': int(match.group(7)), 'bottomcolor': int(match.group(8)),
                         'team': match.group(9) if match.group(9) is not None else ''
                     }
                     players.append(player_info)
-                except (ValueError, TypeError):
-                    pass
+                except (ValueError, TypeError): pass
         server_info['players'] = players
         return server_info
-    except Exception as e:
-        return {"error": f"parse error: {str(e)}"}
+    except Exception as e: return {"error": f"parse error: {str(e)}"}
 
 
 def isNaN(value):
-    try:
-        int(value)
-        return False
-    except ValueError:
-        return True
+    try: int(value); return False
+    except ValueError: return True
 
 
 def read_servers_from_file_raw(file_path):
@@ -231,18 +156,11 @@ def read_servers_from_file_raw(file_path):
                 if line and ':' in line:
                     address_or_hostname, port_str = line.split(':')
                     port = int(port_str)
-                    if port == 30000 or port == 28000:
-                        continue
-                    try:
-                        servers.append((address_or_hostname, port)) 
-                    except ValueError:
-                         print(f"Warning: Invalid port for server '{address_or_hostname}:{port_str}'. Skipping.")
-    except FileNotFoundError:
-        messagebox.showerror("File Error", f"Server list file '{file_path}' not found. Please ensure it exists.")
-        return []
-    except Exception as e:
-        messagebox.showerror("File Error", f"Error reading or parsing server list file '{file_path}': {e}")
-        return []
+                    if port == 30000 or port == 28000: continue
+                    try: servers.append((address_or_hostname, port)) 
+                    except ValueError: print(f"Warning: Invalid port for server '{address_or_hostname}:{port_str}'. Skipping.")
+    except FileNotFoundError: messagebox.showerror("File Error", f"Server list file '{file_path}' not found. Please ensure it exists."); return []
+    except Exception as e: messagebox.showerror("File Error", f"Error reading or parsing server list file '{file_path}': {e}"); return []
     print(f"Loaded {len(servers)} servers from local file '{file_path}'.")
     return servers
 
@@ -283,6 +201,10 @@ class QuakeWorldGUI:
         self.all_servers_tree.tag_configure('ping_medium', background=PING_MEDIUM_COLOR, foreground=DARK_BG)
         self.all_servers_tree.tag_configure('ping_high', background=PING_HIGH_COLOR, foreground=DARK_BG)
         self.all_servers_tree.tag_configure('ping_error', background=PING_HIGH_COLOR, foreground=DARK_BG)
+        self.all_servers_tree.tag_configure('status_ongoing', background=MATCH_ONGOING_COLOR, foreground=DARK_FG)
+        self.all_servers_tree.tag_configure('status_standby', background=MATCH_STANDBY_COLOR, foreground=DARK_BG)
+        self.all_servers_tree.tag_configure('status_not_ongoing', background=MATCH_NOT_ONGOING_COLOR, foreground=DARK_FG)
+
         self.all_servers_tree.heading('Name', text='Server Name / Address', command=lambda: self.sort_column_by('Name', self.all_servers_tree))
         self.all_servers_tree.heading('Port', text='Port', command=lambda: self.sort_column_by('Port', self.all_servers_tree))
         self.all_servers_tree.heading('Ping', text='Ping (ms)', command=lambda: self.sort_column_by('Ping', self.all_servers_tree))
@@ -311,6 +233,10 @@ class QuakeWorldGUI:
         self.favorites_tree.tag_configure('ping_medium', background=PING_MEDIUM_COLOR, foreground=DARK_BG)
         self.favorites_tree.tag_configure('ping_high', background=PING_HIGH_COLOR, foreground=DARK_BG)
         self.favorites_tree.tag_configure('ping_error', background=PING_HIGH_COLOR, foreground=DARK_BG)
+        self.favorites_tree.tag_configure('status_ongoing', background=MATCH_ONGOING_COLOR, foreground=DARK_FG)
+        self.favorites_tree.tag_configure('status_standby', background=MATCH_STANDBY_COLOR, foreground=DARK_BG)
+        self.favorites_tree.tag_configure('status_not_ongoing', background=MATCH_NOT_ONGOING_COLOR, foreground=DARK_FG)
+
         self.favorites_tree.heading('Name', text='Server Name / Address', command=lambda: self.sort_column_by('Name', self.favorites_tree))
         self.favorites_tree.heading('Port', text='Port', command=lambda: self.sort_column_by('Port', self.favorites_tree))
         self.favorites_tree.heading('Ping', text='Ping (ms)', command=lambda: self.sort_column_by('Ping', self.favorites_tree))
@@ -362,7 +288,7 @@ class QuakeWorldGUI:
         self.players_frame.grid_rowconfigure(1, weight=1)
         self.players_frame.grid_columnconfigure(0, weight=1)
 
-        # Settings Tab (NEW)
+        # Settings Tab
         self.settings_frame = ttk.Frame(self.notebook, style='TFrame')
         self.notebook.add(self.settings_frame, text='Settings')
         settings_content_frame = ttk.Frame(self.settings_frame, style='TFrame')
@@ -431,11 +357,10 @@ class QuakeWorldGUI:
         s.configure('TLabel', background=DARK_BG, foreground=DARK_FG)
         s.configure('TButton', background=BUTTON_BG, foreground=BUTTON_FG, borderwidth=1, focusthickness=3, focuscolor=ACCENT_COLOR)
         s.map('TButton', background=[('active', ACCENT_COLOR)])
-        # New styles for refresh buttons
         s.configure('RefreshNormal.TButton', background=BUTTON_BG, foreground=BUTTON_FG, borderwidth=1)
         s.map('RefreshNormal.TButton', background=[('active', ACCENT_COLOR)])
-        s.configure('RefreshActive.TButton', background=REFRESH_ACTIVE_COLOR, foreground=BUTTON_FG, borderwidth=1) # Red background
-        s.map('RefreshActive.TButton', background=[('active', REFRESH_ACTIVE_COLOR)]) # Stay red when active state is clicked
+        s.configure('RefreshActive.TButton', background=REFRESH_ACTIVE_COLOR, foreground=BUTTON_FG, borderwidth=1)
+        s.map('RefreshActive.TButton', background=[('active', REFRESH_ACTIVE_COLOR)])
 
         s.configure('TEntry', fieldbackground=BUTTON_BG, foreground=DARK_FG, insertcolor=DARK_FG, bordercolor=ACCENT_COLOR)
         s.configure('Treeview',
@@ -443,7 +368,7 @@ class QuakeWorldGUI:
                     foreground=DARK_FG,
                     fieldbackground=DARK_BG,
                     borderwidth=0,
-                    highlightthickness=0,
+                    lightthickness=0,
                     relief='flat')
         s.map('Treeview', background=[('selected', SELECTED_BG)], foreground=[('selected', DARK_FG)])
         s.configure('Treeview.Heading',
@@ -460,6 +385,14 @@ class QuakeWorldGUI:
         s.configure('TNotebook.Tab', background=BUTTON_BG, foreground=DARK_FG, borderwidth=0)
         s.map('TNotebook.Tab', background=[('selected', ACCENT_COLOR)], foreground=[('selected', DARK_BG)])
         s.configure("TProgressbar", foreground=ACCENT_COLOR, background=BUTTON_BG, troughcolor=DARK_BG, bordercolor=DARK_BG)
+
+        s.configure('Treeview.status_ongoing', background=MATCH_ONGOING_COLOR, foreground=DARK_FG)
+        s.configure('Treeview.status_standby', background=MATCH_STANDBY_COLOR, foreground=DARK_BG)
+        s.configure('Treeview.status_not_ongoing', background=MATCH_NOT_ONGOING_COLOR, foreground=DARK_FG)
+
+        s.configure('Treeview.spectator_row', background=SPECTATOR_BG, foreground=DARK_FG)
+        s.configure('Treeview.bot_row', background=BOT_COLOR, foreground=DARK_FG) # NEW: Bot row style
+
         self.root.option_add("*background", DARK_BG)
         self.root.option_add("*foreground", DARK_FG)
         self.root.option_add("*Toplevel.background", DARK_BG)
@@ -769,70 +702,104 @@ class QuakeWorldGUI:
 
             items = [(treeview.item(item)['values'], item) for item in treeview.get_children()]
             
-            if treeview == self.players_tree:
-                col_map = {'Player Name': 0, 'Server': 1, 'Map': 2, 'Frags': 3, 'Ping': 4, 'Team': 5}
-            else:
-                col_map = {'Name': 0, 'Port': 1, 'Ping': 2, 'Map': 3, 'Players': 4}
+            if treeview == self.players_tree: col_map = {'Player Name': 0, 'Server': 1, 'Map': 2, 'Frags': 3, 'Ping': 4, 'Team': 5}
+            else: col_map = {'Name': 0, 'Port': 1, 'Ping': 2, 'Map': 3, 'Players': 4}
             col_index = col_map[col]
 
             def sort_key(item):
                 value = item[0][col_index]
                 if col in ('Port', 'Players'):
-                    try:
-                        return int(value)
-                    except ValueError:
-                        return float('inf')
+                    try: return int(value)
+                    except ValueError: return float('inf')
                 elif col in ('Ping', 'Frags'):
-                    try:
-                        return float(str(value).split()[0])
-                    except (ValueError, IndexError):
-                        return float('inf')
+                    try: return float(str(value).split()[0])
+                    except (ValueError, IndexError): return float('inf')
                 return str(value).lower()
 
             items.sort(key=sort_key, reverse=treeview._sort_reverse)
             for index, (_, item_id) in enumerate(items):
                 treeview.detach(item_id)
                 
-                existing_tags = set(treeview.item(item_id, 'tags'))
-                new_zebra_tag = 'evenrow' if index % 2 == 0 else 'oddrow'
-                
-                ping_color_tag = ''
-                if treeview != self.players_tree:
-                    ping_str_from_values = treeview.item(item_id, 'values')[2]
-                    ping_color_tag = self._get_ping_color_tag(ping_str_from_values)
+                tags_to_apply_list = [('evenrow' if index % 2 == 0 else 'oddrow')] # Initialize as a list
+                if 'spectator_row' in treeview.item(item_id, 'tags'): tags_to_apply_list.append('spectator_row')
+                if 'bot_row' in treeview.item(item_id, 'tags'): tags_to_apply_list.append('bot_row') # Preserve bot tag during sort
 
-                tags_to_apply = (existing_tags - {'oddrow', 'evenrow', 'ping_low', 'ping_medium', 'ping_high', 'ping_error', 'spectator_row'}) | {new_zebra_tag}
-                if ping_color_tag:
-                    tags_to_apply.add(ping_color_tag)
+
+                if treeview != self.players_tree: # This section for server list specific coloring
+                    server_info_for_tagging = None
+                    # Find the server_key for this item_id
+                    found_server_key = None
+                    for skey, sid in self.all_servers_items.items():
+                        if sid == item_id: found_server_key = skey; break
+                    if not found_server_key:
+                        for skey, sid in self.favorites_items.items():
+                            if sid == item_id: found_server_key = skey; break
+                    
+                    if found_server_key and found_server_key in self.server_data:
+                        server_info_for_tagging = self.server_data[found_server_key]
+
+                    if server_info_for_tagging:
+                        if server_info_for_tagging['ping'].startswith('Error') or server_info_for_tagging['ping'] == 'N/A': tags_to_apply_list.append('ping_error')
+                        else:
+                            match_status_tag = self._get_match_status_tag(server_info_for_tagging)
+                            if match_status_tag: tags_to_apply_list.append(match_status_tag)
+                            else: tags_to_apply_list.append(self._get_ping_color_tag(server_info_for_tagging['ping']))
                 
-                treeview.item(item_id, tags=tuple(tags_to_apply))
+                treeview.item(item_id, tags=tuple(tags_to_apply_list))
                 treeview.move(item_id, '', 'end')
 
-            if treeview._sort_column == col:
-                treeview._sort_reverse = not treeview._sort_reverse
-            else:
-                treeview._sort_column = col
-                treeview._sort_reverse = False
+            if treeview._sort_column == col: treeview._sort_reverse = not treeview._sort_reverse
+            else: treeview._sort_column, treeview._sort_reverse = col, False
 
 
     def _get_ping_color_tag(self, ping_value_str):
-        if ping_value_str.startswith('Error') or ping_value_str == 'N/A':
-            return 'ping_error'
+        if ping_value_str.startswith('Error') or ping_value_str == 'N/A': return 'ping_error'
         try:
             ping_value = float(ping_value_str)
-            if ping_value <= PING_THRESHOLD_LOW:
-                return 'ping_low'
-            elif ping_value <= PING_THRESHOLD_MEDIUM:
-                return 'ping_medium'
-            else:
-                return 'ping_high'
-        except ValueError:
-            return 'ping_error'
+            if ping_value <= PING_THRESHOLD_LOW: return 'ping_low'
+            elif ping_value <= PING_THRESHOLD_MEDIUM: return 'ping_medium'
+            else: return 'ping_high'
+        except ValueError: return 'ping_error'
+
+    def _get_match_status_tag(self, server_data_dict):
+        try:
+            players_count = server_data_dict.get('players_count')
+            if isinstance(players_count, int):
+                if players_count > 0: return 'status_ongoing'
+                elif players_count == 0: return 'status_standby'
+            return 'status_not_ongoing'
+        except (ValueError, TypeError): return 'status_not_ongoing'
+
+    def _get_match_status_text(self, server_data_dict):
+        try:
+            players_count = server_data_dict.get('players_count')
+            if isinstance(players_count, int):
+                if players_count > 0: return "Ongoing"
+                elif players_count == 0: return "Standby"
+            return "Not Ongoing / Unknown"
+        except (ValueError, TypeError): return "Not Ongoing / Unknown"
+
+    def _get_match_status_color(self, server_data_dict):
+        tag = self._get_match_status_tag(server_data_dict)
+        if tag == 'status_ongoing': return MATCH_ONGOING_COLOR
+        elif tag == 'status_standby': return MATCH_STANDBY_COLOR
+        elif tag == 'status_not_ongoing': return MATCH_NOT_ONGOING_COLOR
+        return DARK_FG
+
+    # NEW: Helper for player row specific background tags
+    def _get_player_row_background_tag(self, player_data, default_zebra_tag):
+        try:
+            player_ping = player_data.get('ping')
+            player_frags = player_data.get('frags')
+
+            if isinstance(player_ping, int) and player_ping == 20: return 'bot_row' # Highest priority for bot
+            if player_frags == 'S': return 'spectator_row' # Next priority for spectator
+            return default_zebra_tag # Fallback to standard zebra stripping
+        except (ValueError, TypeError): return default_zebra_tag
 
 
     def ping_server(self, initial_display_name, port, actual_ip):
-        if self.stop_event.is_set():
-            return
+        if self.stop_event.is_set(): return
         server_key = (actual_ip, port)
         err, response, ping_time = udp_command(actual_ip, port, 'status 31\0')
         current_server_data = {}
@@ -840,30 +807,20 @@ class QuakeWorldGUI:
         if err:
             values_for_treeview = (initial_display_name, port, f"Error: {err['error']}", 'N/A', 'N/A')
             current_server_data = {
-                'original_ip': actual_ip,
-                'display_hostname': initial_display_name,
-                'port': port,
-                'ping': f"Error: {err['error']}",
-                'map': 'N/A',
-                'players_count': 'N/A',
-                'spectators_count': 'N/A',
-                'players': [],
-                'mode': 'N/A'
+                'original_ip': actual_ip, 'display_hostname': initial_display_name,
+                'port': port, 'ping': f"Error: {err['error']}", 'map': 'N/A',
+                'players_count': 'N/A', 'spectators_count': 'N/A',
+                'players': [], 'mode': 'N/A'
             }
         else:
             server_info = parse_status_response(response)
             if 'error' in server_info:
                 values_for_treeview = (initial_display_name, port, f"Error: {server_info['error']}", 'N/A', 'N/A')
                 current_server_data = {
-                    'original_ip': actual_ip,
-                    'display_hostname': initial_display_name,
-                    'port': port,
-                    'ping': f"Error: {server_info['error']}",
-                    'map': 'N/A',
-                    'players_count': 'N/A',
-                    'spectators_count': 'N/A',
-                    'players': [],
-                    'mode': 'N/A'
+                    'original_ip': actual_ip, 'display_hostname': initial_display_name,
+                    'port': port, 'ping': f"Error: {server_info['error']}", 'map': 'N/A',
+                    'players_count': 'N/A', 'spectators_count': 'N/A',
+                    'players': [], 'mode': 'N/A'
                 }
             else:
                 hostname_from_server = server_info.get('hostname')
@@ -875,22 +832,15 @@ class QuakeWorldGUI:
                 players_count = len(all_players) - len(spectators)
                 values_for_treeview = (resolved_display_name, port, f"{ping_time:.2f}", map_name, players_count)
                 current_server_data = {
-                    'original_ip': actual_ip,
-                    'display_hostname': resolved_display_name,
-                    'port': port,
-                    'ping': f"{ping_time:.2f}",
-                    'map': map_name,
-                    'players_count': players_count,
-                    'spectators_count': len(spectators),
-                    'players': all_players,
-                    'mode': gamemode_from_server
+                    'original_ip': actual_ip, 'display_hostname': resolved_display_name,
+                    'port': port, 'ping': f"{ping_time:.2f}", 'map': map_name,
+                    'players_count': players_count, 'spectators_count': len(spectators),
+                    'players': all_players, 'mode': gamemode_from_server
                 }
         with self.gui_lock:
             self.server_data[server_key] = current_server_data.copy()
-            if server_key in self.favorite_servers_data:
-                 self.favorite_servers_data[server_key].update(current_server_data)
-            if server_key in self.open_detail_windows:
-                 self.gui_queue.put((self._update_detail_view, (server_key, current_server_data), {}))
+            if server_key in self.favorite_servers_data: self.favorite_servers_data[server_key].update(current_server_data)
+            if server_key in self.open_detail_windows: self.gui_queue.put((self._update_detail_view, (server_key, current_server_data), {}))
         self.gui_queue.put((self.update_server_display, (server_key, values_for_treeview), {}))
 
 
@@ -899,21 +849,10 @@ class QuakeWorldGUI:
         selected_tab_text = self.notebook.tab(current_tab_id, "text")
 
         servers_to_ping_list = []
-        if selected_tab_text == "All Servers":
-            print("Initiating 'Ping All Servers' for ALL servers.")
-            for name, port, ip in self.servers:
-                servers_to_ping_list.append((name, port, ip))
-        elif selected_tab_text == "Favorites":
-            print("Initiating 'Ping All Servers' for FAVORITE servers only.")
-            for fav_key, fav_data in self.favorite_servers_data.items():
-                servers_to_ping_list.append((fav_data['display_hostname'], fav_data['port'], fav_data['original_ip']))
-        elif selected_tab_text == "Players":
-            print("Initiating 'Ping All Servers' for ALL known servers (from players tab).")
-            for name, port, ip in self.servers:
-                servers_to_ping_list.append((name, port, ip))
-        else:
-            self.gui_queue.put((messagebox.showwarning, ("Ping Servers", "No active server list selected for pinging."), {}))
-            return
+        if selected_tab_text == "All Servers": servers_to_ping_list = self.servers; print("Initiating 'Ping All Servers' for ALL servers.")
+        elif selected_tab_text == "Favorites": servers_to_ping_list = [(v['display_hostname'], v['port'], v['original_ip']) for k,v in self.favorite_servers_data.items()]; print("Initiating 'Ping All Servers' for FAVORITE servers only.")
+        elif selected_tab_text == "Players": servers_to_ping_list = self.servers; print("Initiating 'Ping All Servers' for ALL known servers (from players tab).")
+        else: self.gui_queue.put((messagebox.showwarning, ("Ping Servers", "No active server list selected for pinging."), {})); return
             
         all_unique_servers_to_ping = list(set(servers_to_ping_list))
 
@@ -928,8 +867,7 @@ class QuakeWorldGUI:
         def thread_func():
             current_ping_count = 0
             for initial_display_name, port, actual_ip in all_unique_servers_to_ping:
-                if self.stop_event.is_set():
-                    break
+                if self.stop_event.is_set(): break
                 self.ping_server(initial_display_name, port, actual_ip) 
                 current_ping_count += 1
                 self.gui_queue.put((self.progressbar.config, (), {'value': current_ping_count}))
@@ -942,13 +880,7 @@ class QuakeWorldGUI:
 
 
         with self.gui_lock:
-            for key in self.server_data:
-                self.server_data[key].update({
-                    'ping': 'N/A', 'map': 'N/A', 'players_count': 'N/A',
-                    'spectators_count': 'N/A',
-                    'players': [], 'mode': 'N/A'
-                })
-
+            for key in self.server_data: self.server_data[key].update({'ping': 'N/A', 'map': 'N/A', 'players_count': 'N/A', 'spectators_count': 'N/A', 'players': [], 'mode': 'N/A'})
             self.all_servers_tree.delete(*self.all_servers_tree.get_children())
             self.all_servers_items = {}
             self.favorites_tree.delete(*self.favorites_tree.get_children())
@@ -964,13 +896,8 @@ class QuakeWorldGUI:
             ping_threshold_str = self.ping_threshold_var.get().strip()
             ping_threshold = float('inf')
             if ping_threshold_str:
-                try:
-                    ping_threshold = float(ping_threshold_str)
-                except ValueError:
-                    self.gui_queue.put((messagebox.showwarning, ("Invalid Input", "Please enter a valid number for Max Ping."), {}))
-                    self.gui_queue.put((self.ping_threshold_var.set, ("",), {}))
-                    self.gui_queue.put((self._repopulate_all_trees, (False, float('inf')), {}))
-                    return
+                try: ping_threshold = float(ping_threshold_str)
+                except ValueError: self.gui_queue.put((messagebox.showwarning, ("Invalid Input", "Please enter a valid number for Max Ping."), {})); self.gui_queue.put((self.ping_threshold_var.set, ("",), {})); self.gui_queue.put((self._repopulate_all_trees, (False, float('inf')), {})); return
             self.gui_queue.put((self._repopulate_all_trees, (True, ping_threshold), {}))
 
 
@@ -986,25 +913,26 @@ class QuakeWorldGUI:
             try:
                 ping_val_str = data.get('ping', 'N/A')
                 ping_value = float('inf')
-                if not ("Error" in ping_val_str or ping_val_str == 'N/A'):
-                    ping_value = float(ping_val_str)
+                if not ("Error" in ping_val_str or ping_val_str == 'N/A'): ping_value = float(ping_val_str)
                 players_count_val = data.get('players_count', 'N/A')
                 players_count = -1
-                if players_count_val != 'N/A':
-                    players_count = int(players_count_val)
-                if not filter_by_ping or ping_value <= ping_threshold:
-                    displayable_all_servers.append((ping_value, players_count, actual_ip, port, data))
+                if players_count_val != 'N/A': players_count = int(players_count_val)
+                if not filter_by_ping or ping_value <= ping_threshold: displayable_all_servers.append((ping_value, players_count, actual_ip, port, data))
             except (ValueError, TypeError, IndexError):
-                if not filter_by_ping:
-                    displayable_all_servers.append((float('inf'), -1, actual_ip, port, data))
+                if not filter_by_ping: displayable_all_servers.append((float('inf'), -1, actual_ip, port, data))
         
         displayable_all_servers.sort(key=lambda x: (x[0], -x[1]))
         for index, (ping_value, players_count, ip, port, data) in enumerate(displayable_all_servers):
             values = (data['display_hostname'], data['port'], data['ping'], data['map'], data['players_count'])
-            zebra_tag = 'evenrow' if index % 2 == 0 else 'oddrow'
-            ping_color_tag = self._get_ping_color_tag(data['ping'])
-            tags = (zebra_tag, ping_color_tag)
-            item_id = self.all_servers_tree.insert('', 'end', values=values, tags=tags)
+            
+            tags_to_apply = [('evenrow' if index % 2 == 0 else 'oddrow')]
+            if data['ping'].startswith('Error') or data['ping'] == 'N/A': tags_to_apply.append('ping_error')
+            else:
+                match_status_tag = self._get_match_status_tag(data)
+                if match_status_tag: tags_to_apply.append(match_status_tag)
+                else: tags_to_apply.append(self._get_ping_color_tag(data['ping']))
+
+            item_id = self.all_servers_tree.insert('', 'end', values=values, tags=tuple(tags_to_apply))
             self.all_servers_items[(ip, port)] = item_id
         print(f"Refreshed 'All Servers' tree with {len(self.all_servers_items)} items.")
 
@@ -1017,36 +945,32 @@ class QuakeWorldGUI:
                 current_server_info = self.server_data.get((ip,port), data)
                 ping_val_str = current_server_info.get('ping', 'N/A')
                 ping_value = float('inf')
-                if not ("Error" in ping_val_str or ping_val_str == 'N/A'):
-                    ping_value = float(ping_val_str)
+                if not ("Error" in ping_val_str or ping_val_str == 'N/A'): ping_value = float(ping_val_str)
                 players_count_val = current_server_info.get('players_count', 'N/A')
                 players_count = -1
-                if players_count_val != 'N/A':
-                    players_count = int(players_count_val)
-                if not filter_by_ping or ping_value <= ping_threshold:
-                    displayable_favorites.append((ping_value, players_count, ip, port, current_server_info))
+                if players_count_val != 'N/A': players_count = int(players_count_val)
+                if not filter_by_ping or ping_value <= ping_threshold: displayable_favorites.append((ping_value, players_count, ip, port, current_server_info))
             except (ValueError, TypeError, IndexError):
-                if not filter_by_ping:
-                    displayable_favorites.append((float('inf'), -1, ip, port, data))
+                if not filter_by_ping: displayable_favorites.append((float('inf'), -1, ip, port, data))
         
         displayable_favorites.sort(key=lambda x: (x[0], -x[1]))
         for index, (ping_value, players_count, ip, port, data) in enumerate(displayable_favorites):
             values = (data['display_hostname'], data['port'], data['ping'], data['map'], data['players_count'])
-            zebra_tag = 'evenrow' if index % 2 == 0 else 'oddrow'
-            ping_color_tag = self._get_ping_color_tag(data['ping'])
-            tags = (zebra_tag, ping_color_tag)
-            item_id = self.favorites_tree.insert('', 'end', values=values, tags=tags)
+            
+            tags_to_apply = [('evenrow' if index % 2 == 0 else 'oddrow')]
+            if data['ping'].startswith('Error') or data['ping'] == 'N/A': tags_to_apply.append('ping_error')
+            else:
+                match_status_tag = self._get_match_status_tag(data)
+                if match_status_tag: tags_to_apply.append(match_status_tag)
+                else: tags_to_apply.append(self._get_ping_color_tag(data['ping']))
+
+            item_id = self.favorites_tree.insert('', 'end', values=tuple(values), tags=tuple(tags_to_apply))
             self.favorites_items[(ip, port)] = item_id
         print(f"Refreshed 'Favorites' tree with {len(self.favorites_items)} items.")
 
 
-    def _on_ping_threshold_change(self, event=None):
-        self.root.after(100, self.sort_by_ping_and_players)
-
-
-    def _apply_player_search_filter(self, event=None):
-        search_term = self.player_search_var.get().strip()
-        self.gui_queue.put((self._populate_player_treeview, (search_term,), {}))
+    def _on_ping_threshold_change(self, event=None): self.root.after(100, self.sort_by_ping_and_players)
+    def _apply_player_search_filter(self, event=None): self.gui_queue.put((self._populate_player_treeview, (self.player_search_var.get().strip(),), {}))
 
 
     def _aggregate_and_populate_player_data(self):
@@ -1060,112 +984,63 @@ class QuakeWorldGUI:
                     for player in server_info.get('players', []):
                         if player.get('frags') != 'S':
                             self.all_players_data_flattened.append({
-                                'player_name': player.get('name', 'N/A'),
-                                'server_name': server_display_name,
-                                'map': server_map,
-                                'frags': player.get('frags', 'N/A'),
-                                'ping': player.get('ping', 'N/A'),
-                                'team': player.get('team', '')
+                                'player_name': player.get('name', 'N/A'), 'server_name': server_display_name,
+                                'map': server_map, 'frags': player.get('frags', 'N/A'),
+                                'ping': player.get('ping', 'N/A'), 'team': player.get('team', '')
                             })
-        search_term = self.player_search_var.get().strip()
-        self.gui_queue.put((self._populate_player_treeview, (search_term,), {}))
+        self.gui_queue.put((self._populate_player_treeview, (self.player_search_var.get().strip(),), {}))
         print(f"Aggregated {len(self.all_players_data_flattened)} player entries.")
 
 
     def _populate_player_treeview(self, search_term=''):
         print(f"Populating players treeview with search term: '{search_term}'")
         self.players_tree.delete(*self.players_tree.get_children())
-        filtered_players = []
-
-        for p_data in self.all_players_data_flattened:
-            player_name_lower = p_data.get('player_name', '').lower()
-            if not search_term or search_term.lower() in player_name_lower:
-                filtered_players.append(p_data)
-        
+        filtered_players = [p_data for p_data in self.all_players_data_flattened if not search_term or search_term.lower() in p_data.get('player_name', '').lower()]
         filtered_players.sort(key=lambda x: (str(x.get('server_name', '')).lower(), str(x.get('player_name', '')).lower()))
 
         for index, p_data in enumerate(filtered_players):
             zebra_tag = 'evenrow' if index % 2 == 0 else 'oddrow'
-            self.players_tree.insert('', 'end',
-                                     values=(p_data['player_name'],
-                                             p_data['server_name'],
-                                             p_data['map'],
-                                             p_data['frags'],
-                                             p_data['ping'],
-                                             p_data['team']),
-                                     tags=(zebra_tag,))
+            bg_tag = self._get_player_row_background_tag(p_data, zebra_tag) # Get background tag for this player row
+            self.players_tree.insert('', 'end', values=(p_data['player_name'], p_data['server_name'], p_data['map'], p_data['frags'], p_data['ping'], p_data.get('team', 'N/A')), tags=(bg_tag,))
         print(f"Inserted {len(filtered_players)} items into 'Players' tree after filtering.")
 
 
     def _add_to_favorites_action(self):
         selected_items = self.all_servers_tree.selection()
-        if not selected_items:
-            self.gui_queue.put((messagebox.showinfo, ("Add to Favorites", "Please select one or more servers to add to favorites."), {}))
-            return
-        added_count = 0
-        duplicate_count = 0
-        not_found_count = 0
+        if not selected_items: self.gui_queue.put((messagebox.showinfo, ("Add to Favorites", "Please select one or more servers to add to favorites."), {})); return
+        added_count, duplicate_count, not_found_count = 0, 0, 0
         for item_id in selected_items:
-            found_key = None
-            for key, tree_item_id in self.all_servers_items.items():
-                if tree_item_id == item_id:
-                    found_key = key
-                    break
+            found_key = next((key for key, tree_item_id in self.all_servers_items.items() if tree_item_id == item_id), None)
             if found_key:
                 if found_key not in self.favorite_servers_data:
                     server_info_to_add = self.server_data.get(found_key)
-                    if server_info_to_add:
-                        self.favorite_servers_data[found_key] = server_info_to_add.copy()
-                        added_count += 1
-                    else:
-                        not_found_count += 1
-                else:
-                    duplicate_count += 1
-            else:
-                not_found_count += 1
-        self._update_favorites_tree_display()
-        self._save_favorites()
-        feedback_message = []
-        if added_count > 0:
-            feedback_message.append(f"{added_count} server(s) added.")
-        if duplicate_count > 0:
-            feedback_message.append(f"{duplicate_count} server(s) already in favorites.")
-        if not_found_count > 0:
-            feedback_message.append(f"{not_found_count} server(s) could not be identified.")
+                    if server_info_to_add: self.favorite_servers_data[found_key] = server_info_to_add.copy(); added_count += 1
+                    else: not_found_count += 1
+                else: duplicate_count += 1
+            else: not_found_count += 1
+        self._update_favorites_tree_display(); self._save_favorites()
+        feedback_message = []; 
+        if added_count > 0: feedback_message.append(f"{added_count} server(s) added.")
+        if duplicate_count > 0: feedback_message.append(f"{duplicate_count} server(s) already in favorites.")
+        if not_found_count > 0: feedback_message.append(f"{not_found_count} server(s) could not be identified.")
         self.gui_queue.put((messagebox.showinfo, ("Add to Favorites Result", "\n".join(feedback_message) if feedback_message else "No servers were added."), {}))
 
 
     def _remove_from_favorites_action(self):
         selected_items = self.favorites_tree.selection()
-        if not selected_items:
-            self.gui_queue.put((messagebox.showinfo, ("Remove from Favorites", "Please select one or more servers to remove from favorites."), {}))
-            return
-        removed_count = 0
-        not_in_favorites_count = 0
-        not_found_count = 0
+        if not selected_items: self.gui_queue.put((messagebox.showinfo, ("Remove from Favorites", "Please select one or more servers to remove from favorites."), {})); return
+        removed_count, not_in_favorites_count, not_found_count = 0, 0, 0
         for item_id in selected_items:
-            found_key = None
-            for key, tree_item_id in self.favorites_items.items():
-                if tree_item_id == item_id:
-                    found_key = key
-                    break
+            found_key = next((key for key, tree_item_id in self.favorites_items.items() if tree_item_id == item_id), None)
             if found_key:
-                if found_key in self.favorite_servers_data:
-                    del self.favorite_servers_data[found_key]
-                    removed_count += 1
-                else:
-                    not_in_favorites_count += 1
-            else:
-                not_found_count += 1
-        self._update_favorites_tree_display()
-        self._save_favorites()
-        feedback_message = []
-        if removed_count > 0:
-            feedback_message.append(f"{removed_count} server(s) removed.")
-        if not_in_favorites_count > 0:
-            feedback_message.append(f"{not_in_favorites_count} server(s) were not in favorites.")
-        if not_found_count > 0:
-            feedback_message.append(f"{not_found_count} server(s) could not be identified.")
+                if found_key in self.favorite_servers_data: del self.favorite_servers_data[found_key]; removed_count += 1
+                else: not_in_favorites_count += 1
+            else: not_found_count += 1
+        self._update_favorites_tree_display(); self._save_favorites()
+        feedback_message = []; 
+        if removed_count > 0: feedback_message.append(f"{removed_count} server(s) removed.")
+        if not_in_favorites_count > 0: feedback_message.append(f"{not_in_favorites_count} server(s) were not in favorites.")
+        if not_found_count > 0: feedback_message.append(f"{not_found_count} server(s) could not be identified.")
         self.gui_queue.put((messagebox.showinfo, ("Remove from Favorites Result", "\n".join(feedback_message) if feedback_message else "No servers were removed."), {}))
 
 
@@ -1184,31 +1059,18 @@ class QuakeWorldGUI:
 
     def _copy_selected_address_to_clipboard(self):
         current_tab_id = self.notebook.select()
-        if current_tab_id == self.all_servers_frame._w:
-            tree_to_use = self.all_servers_tree
-            items_map = self.all_servers_items
-        elif current_tab_id == self.favorites_frame._w:
-            tree_to_use = self.favorites_tree
-            items_map = self.favorites_items
-        else:
-            self.gui_queue.put((messagebox.showerror, ("Error", "No active server list found to copy from."), {}))
-            return
+        tree_to_use, items_map = None, None
+        if current_tab_id == self.all_servers_frame._w: tree_to_use, items_map = self.all_servers_tree, self.all_servers_items
+        elif current_tab_id == self.favorites_frame._w: tree_to_use, items_map = self.favorites_tree, self.favorites_items
+        else: self.gui_queue.put((messagebox.showerror, ("Error", "No active server list found to copy from."), {})); return
         selected_item = tree_to_use.focus()
-        if not selected_item:
-            self.gui_queue.put((messagebox.showinfo, ("Copy Address", "Please select a server to copy its address."), {}))
-            return
-        found_key = None
-        for key, item_id in items_map.items():
-            if item_id == selected_item:
-                found_key = key
-                break
+        if not selected_item: self.gui_queue.put((messagebox.showinfo, ("Copy Address", "Please select a server to copy its address."), {})); return
+        found_key = next((key for key, item_id in items_map.items() if item_id == selected_item), None)
         if found_key:
             address_to_copy = f"{found_key[0]}:{found_key[1]}"
-            self.root.clipboard_clear()
-            self.root.clipboard_append(address_to_copy)
+            self.root.clipboard_clear(); self.root.clipboard_append(address_to_copy)
             self.gui_queue.put((messagebox.showinfo, ("Copy Address", f"'{address_to_copy}' copied to clipboard."), {}))
-        else:
-            self.gui_queue.put((messagebox.showerror, ("Error", "Could not identify the selected server to copy address."), {}))
+        else: self.gui_queue.put((messagebox.showerror, ("Error", "Could not identify the selected server to copy address."), {}))
 
 
     def connect_to_server(self, address, port):
@@ -1217,35 +1079,43 @@ class QuakeWorldGUI:
         try:
             subprocess.Popen(command, shell=True)
             self.gui_queue.put((messagebox.showinfo, ("Launch Client", f"Attempting to connect to {address}:{port} with '{client_exec}'..."), {}))
-        except FileNotFoundError:
-            self.gui_queue.put((messagebox.showerror, ("Error", f"QuakeWorld client executable not found. Please ensure '{client_exec}' is in your system's PATH or the application directory."), {}))
-        except Exception as e:
-            self.gui_queue.put((messagebox.showerror, ("Error", f"Failed to launch QuakeWorld client: {e}"), {}))
+        except FileNotFoundError: self.gui_queue.put((messagebox.showerror, ("Error", f"QuakeWorld client executable not found. Please ensure '{client_exec}' is in your system's PATH or the application directory."), {}))
+        except Exception as e: self.gui_queue.put((messagebox.showerror, ("Error", f"Failed to launch QuakeWorld client: {e}"), {}))
+
 
     def _on_detail_window_closing_handler(self, server_key):
         if server_key in self.open_detail_windows:
             detail_info = self.open_detail_windows[server_key]
             if detail_info['window'].winfo_exists():
-                if detail_info['refresh_job_id'] is not None:
-                    detail_info['window'].after_cancel(detail_info['refresh_job_id'])
+                if detail_info['refresh_job_id'] is not None: detail_info['window'].after_cancel(detail_info['refresh_job_id'])
                 detail_info['window'].destroy()
             del self.open_detail_windows[server_key]
 
 
     def _update_detail_view(self, server_key, server_detail_data):
-        if self.stop_event.is_set() or server_key not in self.open_detail_windows or not self.open_detail_windows[server_key]['window'].winfo_exists():
-            return
+        if self.stop_event.is_set() or server_key not in self.open_detail_windows or not self.open_detail_windows[server_key]['window'].winfo_exists(): return
         detail_window_ref = self.open_detail_windows[server_key]['window']
+        info_frame_ref = detail_window_ref._info_frame
+        players_label_ref = detail_window_ref._players_on_server_label
         detail_labels_ref = detail_window_ref._detail_labels
         detail_player_tree_ref = detail_window_ref._detail_player_tree
         
         detail_window_ref.title(f"Details for {server_detail_data.get('display_hostname', 'N/A')}:{server_detail_data.get('port', 'N/A')}")
 
         if not server_detail_data or server_detail_data['ping'].startswith('Error'):
-            for label_key in detail_labels_ref:
-                detail_labels_ref[label_key].config(text="N/A", foreground=ERROR_COLOR)
-            for item in detail_player_tree_ref.get_children():
-                detail_player_tree_ref.delete(item)
+            for label_key in detail_labels_ref: detail_labels_ref[label_key].config(text="N/A", foreground=ERROR_COLOR)
+            for item in detail_player_tree_ref.get_children(): detail_player_tree_ref.delete(item)
+            
+            detail_window_ref.update_idletasks()
+            
+            info_height = info_frame_ref.winfo_reqheight()
+            players_label_height = players_label_ref.winfo_reqheight()
+            players_tree_height = detail_player_tree_ref.winfo_reqheight()
+            
+            total_dynamic_height = info_height + players_label_height + players_tree_height + 40
+            
+            current_width = max(detail_window_ref.winfo_width(), 600)
+            detail_window_ref.geometry(f"{current_width}x{int(total_dynamic_height)}")
             return
 
         detail_labels_ref['name'].config(text=f"{server_detail_data.get('display_hostname', 'N/A')}", foreground=DARK_FG)
@@ -1256,17 +1126,27 @@ class QuakeWorldGUI:
         detail_labels_ref['mode'].config(text=f"{server_detail_data.get('mode', 'N/A')}", foreground=DARK_FG)
         detail_labels_ref['players_count'].config(text=f"{server_detail_data.get('players_count', 'N/A')}", foreground=DARK_FG)
         detail_labels_ref['spectators_count'].config(text=f"{server_detail_data.get('spectators_count', 'N/A')}", foreground=DARK_FG)
+        match_status_text = self._get_match_status_text(server_detail_data)
+        match_status_color = self._get_match_status_color(server_detail_data)
+        detail_labels_ref['match_status'].config(text=f"{match_status_text}", foreground=match_status_color)
 
+        for item in detail_player_tree_ref.get_children(): detail_player_tree_ref.delete(item)
+        self._insert_players_into_tree(detail_player_tree_ref, server_detail_data.get('players', []))
 
-        for item in detail_player_tree_ref.get_children():
-            detail_player_tree_ref.delete(item)
+        detail_window_ref.update_idletasks() # Force update to get accurate heights
+
+        info_height = info_frame_ref.winfo_reqheight()
+        players_label_height = players_label_ref.winfo_reqheight()
+        players_tree_height = detail_player_tree_ref.winfo_reqheight()
         
-        self._insert_players_into_tree(detail_player_tree_ref, server_detail_data.get('players', []), simplified_columns=False)
+        total_dynamic_height = info_height + players_label_height + players_tree_height + 40
+        
+        current_width = max(detail_window_ref.winfo_width(), 600)
+        detail_window_ref.geometry(f"{current_width}x{int(total_dynamic_height)}")
 
 
     def _auto_refresh_details_handler(self, server_key):
-        if self.stop_event.is_set() or server_key not in self.open_detail_windows or not self.open_detail_windows[server_key]['window'].winfo_exists():
-            return
+        if self.stop_event.is_set() or server_key not in self.open_detail_windows or not self.open_detail_windows[server_key]['window'].winfo_exists(): return
         detail_window_ref = self.open_detail_windows[server_key]['window']
         actual_ip, port = server_key
         Thread(target=self._ping_and_update_detail_modal, args=(server_key, actual_ip, port), name=f"DetailRefresh-{actual_ip}:{port}").start()
@@ -1281,29 +1161,19 @@ class QuakeWorldGUI:
 
         if err:
             current_server_data = {
-                'original_ip': actual_ip,
-                'display_hostname': initial_display_name,
-                'port': port,
-                'ping': f"Error: {err['error']}",
-                'map': 'N/A',
-                'players_count': 'N/A',
-                'spectators_count': 'N/A',
-                'players': [],
-                'mode': 'N/A' 
+                'original_ip': actual_ip, 'display_hostname': initial_display_name,
+                'port': port, 'ping': f"Error: {err['error']}", 'map': 'N/A',
+                'players_count': 'N/A', 'spectators_count': 'N/A',
+                'players': [], 'mode': 'N/A'
             }
         else:
             server_info = parse_status_response(response)
             if 'error' in server_info:
                 current_server_data = {
-                    'original_ip': actual_ip,
-                    'display_hostname': initial_display_name,
-                    'port': port,
-                    'ping': f"Error: {server_info['error']}",
-                    'map': 'N/A',
-                    'players_count': 'N/A',
-                    'spectators_count': 'N/A',
-                    'players': [],
-                    'mode': 'N/A'
+                    'original_ip': actual_ip, 'display_hostname': initial_display_name,
+                    'port': port, 'ping': f"Error: {server_info['error']}", 'map': 'N/A',
+                    'players_count': 'N/A', 'spectators_count': 'N/A',
+                    'players': [], 'mode': 'N/A'
                 }
             else:
                 hostname_from_server = server_info.get('hostname')
@@ -1314,255 +1184,173 @@ class QuakeWorldGUI:
                 spectators = [p for p in all_players if p.get('frags') == 'S']
                 players_count = len(all_players) - len(spectators)
                 current_server_data = {
-                    'original_ip': actual_ip,
-                    'display_hostname': resolved_display_name,
-                    'port': port,
-                    'ping': f"{ping_time:.2f}",
-                    'map': map_name,
-                    'players_count': players_count,
-                    'spectators_count': len(spectators),
-                    'players': all_players,
-                    'mode': gamemode_from_server
+                    'original_ip': actual_ip, 'display_hostname': resolved_display_name,
+                    'port': port, 'ping': f"{ping_time:.2f}", 'map': map_name,
+                    'players_count': players_count, 'spectators_count': len(spectators),
+                    'players': all_players, 'mode': gamemode_from_server
                 }
         with self.gui_lock:
             self.server_data[server_key] = current_server_data.copy()
-            if server_key in self.favorite_servers_data:
-                 self.favorite_servers_data[server_key].update(current_server_data)
+            if server_key in self.favorite_servers_data: self.favorite_servers_data[server_key].update(current_server_data)
         self.gui_queue.put((self._update_detail_view, (server_key, current_server_data), {}))
 
-    def _insert_players_into_tree(self, treeview, players_data, simplified_columns=False):
-        actual_players = []
-        spectators = []
-        for p in players_data:
-            if p.get('frags') == 'S':
-                spectators.append(p)
-            else:
-                actual_players.append(p)
+    def _insert_players_into_tree(self, treeview, players_data):
+        actual_players = [p for p in players_data if p.get('frags') != 'S']
+        spectators = [p for p in players_data if p.get('frags') == 'S']
         actual_players.sort(key=lambda x: (-x.get('frags', 0) if isinstance(x.get('frags'), int) else 0, x.get('name', '').lower()))
         spectators.sort(key=lambda x: x.get('name', '').lower())
 
-        for index, p in enumerate(actual_players):
+        num_players_to_show = len(actual_players) + len(spectators)
+        treeview.config(height=min(MAX_VISIBLE_PLAYER_ROWS_IN_MODAL, max(1, num_players_to_show)))
+
+        for index, p_data in enumerate(actual_players):
             zebra_tag = 'evenrow' if index % 2 == 0 else 'oddrow'
-            treeview.insert('', 'end', 
-                            values=(p.get('name', 'N/A'), p.get('frags', 'N/A'), p.get('time', 'N/A'), p.get('ping', 'N/A'), p.get('team', 'N/A')),
-                            tags=(zebra_tag,))
-        for index, p in enumerate(spectators):
+            bg_tag = self._get_player_row_background_tag(p_data, zebra_tag)
+            treeview.insert('', 'end', values=(p_data.get('name', 'N/A'), p_data.get('frags', 'N/A'), p_data.get('time', 'N/A'), p_data.get('ping', 'N/A'), p_data.get('team', 'N/A')), tags=(bg_tag,))
+        for index, p_data in enumerate(spectators):
             zebra_tag = 'evenrow' if index % 2 == 0 else 'oddrow'
-            treeview.insert('', 'end', 
-                            values=(p.get('name', 'N/A'), p.get('frags', 'N/A'), p.get('time', 'N/A'), p.get('ping', 'N/A'), p.get('team', 'N/A')),
-                            tags=('spectator_row', zebra_tag))
+            bg_tag = self._get_player_row_background_tag(p_data, zebra_tag)
+            treeview.insert('', 'end', values=(p_data.get('name', 'N/A'), p_data.get('frags', 'S'), p_data.get('time', 'N/A'), p_data.get('ping', 'N/A'), p_data.get('team', 'N/A')), tags=(bg_tag,))
 
 
     def _on_tab_select(self, event=None):
         selected_tab_id = self.notebook.select()
         selected_tab_text = self.notebook.tab(selected_tab_id, "text")
 
-        if selected_tab_text == "Players":
-            self.player_search_container.grid(row=0, column=0, columnspan=2, sticky='ew', padx=5, pady=5)
-            self._apply_player_search_filter()
-        else:
-            self.player_search_container.grid_forget()
+        if selected_tab_text == "Players": self.player_search_container.grid(row=0, column=0, columnspan=2, sticky='ew', padx=5, pady=5); self._apply_player_search_filter()
+        else: self.player_search_container.grid_forget()
 
-        if selected_tab_text == "Favorites":
-            self.remove_from_favorites_button.pack(side='left', padx=5)
-        else:
-            self.remove_from_favorites_button.pack_forget()
+        if selected_tab_text == "Favorites": self.remove_from_favorites_button.pack(side='left', padx=5)
+        else: self.remove_from_favorites_button.pack_forget()
 
 
     def show_server_details(self, event):
         current_tab_id = self.notebook.select()
-        tree_to_use = None
-        items_map = None
+        tree_to_use, items_map = None, None
 
-        if current_tab_id == self.all_servers_frame._w:
-            tree_to_use = self.all_servers_tree
-            items_map = self.all_servers_items
-        elif current_tab_id == self.favorites_frame._w:
-            tree_to_use = self.favorites_tree
-            items_map = self.favorites_items
+        if current_tab_id == self.all_servers_frame._w: tree_to_use, items_map = self.all_servers_tree, self.all_servers_items
+        elif current_tab_id == self.favorites_frame._w: tree_to_use, items_map = self.favorites_tree, self.favorites_items
         elif current_tab_id == self.players_frame._w:
             selected_item = self.players_tree.focus()
             if selected_item:
                 player_values = self.players_tree.item(selected_item)['values']
                 server_name_to_search = player_values[1]
-                server_key_to_open = None
-                with self.gui_lock:
-                    for s_key, s_data in self.server_data.items():
-                        if s_data.get('display_hostname') == server_name_to_search:
-                            server_key_to_open = s_key
-                            break
-                if server_key_to_open:
-                    self._open_detail_window_for_key(server_key_to_open)
-                else:
-                    self.gui_queue.put((messagebox.showinfo, ("Server Not Found", f"Could not find server details for '{server_name_to_search}'."), {}))
+                server_key_to_open = next((s_key for s_key, s_data in self.server_data.items() if s_data.get('display_hostname') == server_name_to_search), None)
+                if server_key_to_open: self._open_detail_window_for_key(server_key_to_open)
+                else: self.gui_queue.put((messagebox.showinfo, ("Server Not Found", f"Could not find server details for '{server_name_to_search}'."), {})); return
             return
         
         if tree_to_use and items_map:
             selected_item = tree_to_use.focus()
-            if not selected_item:
-                return
-            found_key = None
-            for key, item_id in items_map.items():
-                if item_id == selected_item:
-                    found_key = key
-                    break
-            if not found_key:
-                self.gui_queue.put((messagebox.showerror, ("Error", "Could not find server details for the selected item."), {}))
-                return
+            if not selected_item: return
+            found_key = next((key for key, item_id in items_map.items() if item_id == selected_item), None)
+            if not found_key: self.gui_queue.put((messagebox.showerror, ("Error", "Could not find server details for the selected item."), {})); return
             self._open_detail_window_for_key(found_key)
-        else:
-            return
+        else: return
 
     def _open_detail_window_for_key(self, server_key):
-        if server_key in self.open_detail_windows and self.open_detail_windows[server_key]['window'].winfo_exists():
-            self.open_detail_windows[server_key]['window'].lift()
-            return
+        if server_key in self.open_detail_windows and self.open_detail_windows[server_key]['window'].winfo_exists(): self.open_detail_windows[server_key]['window'].lift(); return
 
         print(f"Opening new detail window for server {server_key}.")
         detail_window = tk.Toplevel(self.root)
-        detail_window.geometry("600x450")
+        detail_window.geometry("600x1")
         detail_window.config(bg=DARK_BG)
-        detail_window.grab_set()
+        
+        detail_window.transient(self.root) 
 
         initial_display_hostname = self.server_data[server_key].get('display_hostname', 'N/A')
         port = self.server_data[server_key].get('port', 'N/A')
         detail_window.title(f"Details for {initial_display_hostname}:{port}")
-        detail_window.transient(self.root)
 
         info_frame = ttk.Frame(detail_window, style='TFrame')
         info_frame.pack(padx=10, pady=10, fill='x')
-
-        info_frame.columnconfigure(1, weight=1)
-        info_frame.columnconfigure(3, weight=1)
+        detail_window._info_frame = info_frame 
+        info_frame.columnconfigure(1, weight=1); info_frame.columnconfigure(3, weight=1)
 
         detail_window._detail_labels = {} 
         
         row_idx = 0
         ttk.Label(info_frame, text="Server Name:", style='TLabel').grid(row=row_idx, column=0, sticky='w', padx=2, pady=1)
-        detail_window._detail_labels['name'] = ttk.Label(info_frame, text="N/A", anchor='w', style='TLabel')
-        detail_window._detail_labels['name'].grid(row=row_idx, column=1, sticky='ew', padx=2, pady=1)
-
+        detail_window._detail_labels['name'] = ttk.Label(info_frame, text="N/A", anchor='w', style='TLabel'); detail_window._detail_labels['name'].grid(row=row_idx, column=1, sticky='ew', padx=2, pady=1)
         ttk.Label(info_frame, text="Map:", style='TLabel').grid(row=row_idx, column=2, sticky='w', padx=10, pady=1)
-        detail_window._detail_labels['map'] = ttk.Label(info_frame, text="N/A", anchor='w', style='TLabel')
-        detail_window._detail_labels['map'].grid(row=row_idx, column=3, sticky='ew', padx=2, pady=1)
+        detail_window._detail_labels['map'] = ttk.Label(info_frame, text="N/A", anchor='w', style='TLabel'); detail_window._detail_labels['map'].grid(row=row_idx, column=3, sticky='ew', padx=2, pady=1)
         row_idx += 1
 
         ttk.Label(info_frame, text="IP Address:", style='TLabel').grid(row=row_idx, column=0, sticky='w', padx=2, pady=1)
-        detail_window._detail_labels['ip'] = ttk.Label(info_frame, text="N/A", anchor='w', style='TLabel')
-        detail_window._detail_labels['ip'].grid(row=row_idx, column=1, sticky='ew', padx=2, pady=1)
-
+        detail_window._detail_labels['ip'] = ttk.Label(info_frame, text="N/A", anchor='w', style='TLabel'); detail_window._detail_labels['ip'].grid(row=row_idx, column=1, sticky='ew', padx=2, pady=1)
         ttk.Label(info_frame, text="Mode:", style='TLabel').grid(row=row_idx, column=2, sticky='w', padx=10, pady=1)
-        detail_window._detail_labels['mode'] = ttk.Label(info_frame, text="N/A", anchor='w', style='TLabel')
-        detail_window._detail_labels['mode'].grid(row=row_idx, column=3, sticky='ew', padx=2, pady=1)
+        detail_window._detail_labels['mode'] = ttk.Label(info_frame, text="N/A", anchor='w', style='TLabel'); detail_window._detail_labels['mode'].grid(row=row_idx, column=3, sticky='ew', padx=2, pady=1)
         row_idx += 1
 
         ttk.Label(info_frame, text="Ping:", style='TLabel').grid(row=row_idx, column=0, sticky='w', padx=2, pady=1)
-        detail_window._detail_labels['ping'] = ttk.Label(info_frame, text="N/A", anchor='w', style='TLabel')
-        detail_window._detail_labels['ping'].grid(row=row_idx, column=1, sticky='ew', padx=2, pady=1)
-
+        detail_window._detail_labels['ping'] = ttk.Label(info_frame, text="N/A", anchor='w', style='TLabel'); detail_window._detail_labels['ping'].grid(row=row_idx, column=1, sticky='ew', padx=2, pady=1)
         ttk.Label(info_frame, text="Players:", style='TLabel').grid(row=row_idx, column=2, sticky='w', padx=10, pady=1)
-        detail_window._detail_labels['players_count'] = ttk.Label(info_frame, text="N/A", anchor='w', style='TLabel')
-        detail_window._detail_labels['players_count'].grid(row=row_idx, column=3, sticky='ew', padx=2, pady=1)
+        detail_window._detail_labels['players_count'] = ttk.Label(info_frame, text="N/A", anchor='w', style='TLabel'); detail_window._detail_labels['players_count'].grid(row=row_idx, column=3, sticky='ew', padx=2, pady=1)
         row_idx += 1
 
         ttk.Label(info_frame, text="Spectators:", style='TLabel').grid(row=row_idx, column=2, sticky='w', padx=10, pady=1)
-        detail_window._detail_labels['spectators_count'] = ttk.Label(info_frame, text="N/A", anchor='w', style='TLabel')
-        detail_window._detail_labels['spectators_count'].grid(row=row_idx, column=3, sticky='ew', padx=2, pady=1)
+        detail_window._detail_labels['spectators_count'] = ttk.Label(info_frame, text="N/A", anchor='w', style='TLabel'); detail_window._detail_labels['spectators_count'].grid(row=row_idx, column=3, sticky='ew', padx=2, pady=1)
         
-        refresh_interval_milliseconds = 2000 
-        refresh_interval_seconds = refresh_interval_milliseconds / 1000
-        ttk.Label(info_frame, text=f"Auto-refresh: {refresh_interval_seconds:.0f} seconds", 
-                  font=('TkDefaultFont', 8, 'italic'), foreground=DARK_FG, anchor='w', style='TLabel').grid(row=row_idx + 1, column=0, columnspan=4, sticky='ew', padx=2, pady=5)
+        ttk.Label(info_frame, text="Match Status:", style='TLabel').grid(row=row_idx, column=0, sticky='w', padx=2, pady=1)
+        detail_window._detail_labels['match_status'] = ttk.Label(info_frame, text="N/A", anchor='w', style='TLabel'); detail_window._detail_labels['match_status'].grid(row=row_idx, column=1, sticky='ew', padx=2, pady=1)
+        row_idx += 1
 
+        refresh_interval_milliseconds = 2000; refresh_interval_seconds = refresh_interval_milliseconds / 1000
+        ttk.Label(info_frame, text=f"Auto-refresh: {refresh_interval_seconds:.0f} seconds", font=('TkDefaultFont', 8, 'italic'), foreground=DARK_FG, anchor='w', style='TLabel').grid(row=row_idx, column=0, columnspan=4, sticky='ew', padx=2, pady=5)
 
         content_frame = ttk.Frame(detail_window, style='TFrame')
         content_frame.pack(padx=10, pady=5, fill='both', expand=True)
-        content_frame.columnconfigure(0, weight=1)
-        content_frame.rowconfigure(1, weight=1) 
+        detail_window._content_frame = content_frame 
+        content_frame.columnconfigure(0, weight=1); content_frame.rowconfigure(1, weight=1) 
 
-        
-        ttk.Label(content_frame, text="Players on server:", style='TLabel').grid(row=0, column=0, sticky='w', pady=(5,2))
+        players_on_server_label = ttk.Label(content_frame, text="Players on server:", style='TLabel')
+        players_on_server_label.grid(row=0, column=0, sticky='w', pady=(5,2))
+        detail_window._players_on_server_label = players_on_server_label
 
-        detail_window._detail_player_tree = ttk.Treeview(content_frame,
-                                               columns=('Name', 'Frags', 'Time', 'Ping', 'Team'),
-                                               show='headings',
-                                               height=8,
-                                               style='Treeview')
-        
+        detail_window._detail_player_tree = ttk.Treeview(content_frame, columns=('Name', 'Frags', 'Time', 'Ping', 'Team'), show='headings', height=1, style='Treeview')
         detail_window._detail_player_tree.tag_configure('spectator_row', background=SPECTATOR_BG, foreground=DARK_FG)
         detail_window._detail_player_tree.tag_configure('oddrow', background=ODD_ROW_BG, foreground=DARK_FG)
         detail_window._detail_player_tree.tag_configure('evenrow', background=EVEN_ROW_BG, foreground=DARK_FG)
 
-
-        detail_window._detail_player_tree.heading('Name', text='Name')
-        detail_window._detail_player_tree.column('Name', width=160, anchor='w')
-        detail_window._detail_player_tree.heading('Frags', text='Frags')
-        detail_window._detail_player_tree.column('Frags', width=45, anchor='center')
-        detail_window._detail_player_tree.heading('Time', text='Time')
-        detail_window._detail_player_tree.column('Time', width=45, anchor='center')
-        detail_window._detail_player_tree.heading('Ping', text='Ping')
-        detail_window._detail_player_tree.column('Ping', width=45, anchor='center')
-        detail_window._detail_player_tree.heading('Team', text='Team')
-        detail_window._detail_player_tree.column('Team', width=80, anchor='center')
+        detail_window._detail_player_tree.heading('Name', text='Name'); detail_window._detail_player_tree.column('Name', width=160, anchor='w')
+        detail_window._detail_player_tree.heading('Frags', text='Frags'); detail_window._detail_player_tree.column('Frags', width=45, anchor='center')
+        detail_window._detail_player_tree.heading('Time', text='Time'); detail_window._detail_player_tree.column('Time', width=45, anchor='center')
+        detail_window._detail_player_tree.heading('Ping', text='Ping'); detail_window._detail_player_tree.column('Ping', width=45, anchor='center')
+        detail_window._detail_player_tree.heading('Team', text='Team'); detail_window._detail_player_tree.column('Team', width=80, anchor='center')
         
         detail_window._detail_player_tree.grid(row=1, column=0, sticky='nsew', pady=(0, 5))
 
-        detail_player_scrollbar = ttk.Scrollbar(content_frame, orient='vertical', command=detail_window._detail_player_tree.yview)
-        detail_window._detail_player_tree.configure(yscrollcommand=detail_player_scrollbar.set)
-        detail_player_scrollbar.grid(row=1, column=1, sticky='ns', pady=(0, 5))
-
-
-        initial_server_data = self.server_data.get(server_key, {}) 
-        self._update_detail_view(server_key, initial_server_data)
-        
+        initial_server_data = self.server_data.get(server_key, {}); self._update_detail_view(server_key, initial_server_data)
         actual_ip, port = server_key
         Thread(target=self._ping_and_update_detail_modal, args=(server_key, actual_ip, port), name=f"ImmediateDetailPing-{actual_ip}:{port}").start()
         
         refresh_job_id = detail_window.after(2000, self._auto_refresh_details_handler, server_key) 
         
-        self.open_detail_windows[server_key] = {
-            'window': detail_window,
-            'refresh_job_id': refresh_job_id
-        }
+        self.open_detail_windows[server_key] = {'window': detail_window, 'refresh_job_id': refresh_job_id}
         detail_window.protocol("WM_DELETE_WINDOW", lambda: self._on_detail_window_closing_handler(server_key))
 
 
-    def _start_drag_window(self, event, window):
-        window._offset_x = event.x
-        window._offset_y = event.y
-
-    def _drag_window(self, event, window):
-        x = window.winfo_x() + event.x - window._offset_x
-        y = window.winfo_y() + event.y - window._offset_y
-        window.geometry(f"+{x}+{y}")
+    def _start_drag_window(self, event, window): window._offset_x, window._offset_y = event.x, event.y
+    def _drag_window(self, event, window): window.geometry(f"+{window.winfo_x() + event.x - window._offset_x}+{window.winfo_y() + event.y - window._offset_y}")
 
 
     def update_server_display(self, server_key, values_for_treeview):
-        if self.stop_event.is_set():
-            return
-        if self.root.winfo_exists():
-            with self.gui_lock:
-                item_id_all = self.all_servers_items.get(server_key)
-                if item_id_all:
-                    current_tags_all = list(self.all_servers_tree.item(item_id_all, 'tags'))
-                    new_ping_tag = self._get_ping_color_tag(values_for_treeview[2])
+        if self.stop_event.is_set() or not self.root.winfo_exists(): return
+        with self.gui_lock:
+            for tree, items_map in [(self.all_servers_tree, self.all_servers_items), (self.favorites_tree, self.favorites_items)]:
+                item_id = items_map.get(server_key)
+                if item_id:
+                    tags_to_apply_list = [('evenrow' if (list(items_map.keys()).index(server_key)) % 2 == 0 else 'oddrow')]
                     
-                    current_tags_all = [tag for tag in current_tags_all if not tag.startswith('ping_')]
-                    current_tags_all.append(new_ping_tag)
+                    server_info = self.server_data.get(server_key, {}) 
+                    
+                    if server_info.get('ping', 'N/A').startswith('Error') or server_info.get('ping') == 'N/A': tags_to_apply_list.append('ping_error')
+                    else:
+                        match_status_tag = self._get_match_status_tag(server_info)
+                        if match_status_tag: tags_to_apply_list.append(match_status_tag)
+                        else: tags_to_apply_list.append(self._get_ping_color_tag(server_info.get('ping', 'N/A')))
 
-                    self.all_servers_tree.item(item_id_all, values=values_for_treeview, image='', tags=tuple(current_tags_all))
-                
-                item_id_fav = self.favorites_items.get(server_key)
-                if item_id_fav:
-                    current_tags_fav = list(self.favorites_tree.item(item_id_fav, 'tags'))
-                    new_ping_tag = self._get_ping_color_tag(values_for_treeview[2])
-
-                    current_tags_fav = [tag for tag in current_tags_fav if not tag.startswith('ping_')]
-                    current_tags_fav.append(new_ping_tag)
-
-                    self.favorites_tree.item(item_id_fav, values=values_for_treeview, image='', tags=tuple(current_tags_fav))
-        else:
-            pass
+                    tree.item(item_id, values=values_for_treeview, image='', tags=tuple(tags_to_apply_list))
 
 
 def main():
@@ -1575,4 +1363,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # yay
